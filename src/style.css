@@ -1,2 +1,1150 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap');
-:root{font-family:'DM Sans',sans-serif;color:#fff1d8;background:#281d16;font-synthesis:none}*{box-sizing:border-box}body{margin:0}button{font:inherit;cursor:pointer}button:focus-visible{outline:3px solid #fff0bf;outline-offset:5px}.game{position:relative;width:100%;height:100svh;min-height:560px;overflow:hidden}canvas{display:block}.vignette{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#24170f70,transparent 25%,transparent 60%,#211710d9),linear-gradient(90deg,#251b1525,transparent 40%,#251b1525)}header{position:absolute;top:30px;left:36px;right:36px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}.brand{display:flex;gap:12px;font:800 24px/1 'Outfit',sans-serif;letter-spacing:-.5px;text-shadow:0 2px 12px #342219}.brand b{color:#edc779}.brand small{display:block;font:500 9px 'DM Sans',sans-serif;letter-spacing:2.8px;margin-top:9px}.brand-mark{color:#edc779;font-size:43px}.timer{position:absolute;left:50%;transform:translateX(-50%);border:1px solid #f6dab644;background:#2c221edb;border-radius:16px;padding:12px 24px 10px;font:500 35px 'Outfit';font-variant-numeric:tabular-nums;box-shadow:0 8px 25px #25180f20}.timer small{display:block;text-align:center;font:500 8px 'DM Sans';letter-spacing:2px;color:#c9bba4;margin-top:4px}.clock{font-size:32px;margin-right:10px;color:#e5bd72}.urgent{color:#ffb093}.remaining{width:208px;background:#2b231ee8;padding:16px 18px;border:1px solid #ddbb7a44;border-radius:14px}.remaining>div:first-child{display:flex;align-items:center;justify-content:space-between;font-size:12px}.remaining strong{font:600 29px 'Outfit';color:#f2cd80}.remaining em{font-style:normal;font-size:16px}.track{height:5px;background:#ffffff19;border-radius:9px;margin:9px 0 10px;overflow:hidden}.track i{display:block;height:100%;background:#bdcd87;transition:width .2s}.remaining small{font-size:6.5px;letter-spacing:1px;color:#beae96}.scene-label{position:absolute;top:126px;left:39px;display:flex;align-items:center;gap:8px;font-size:8px;letter-spacing:2px;color:#ebd7bb}.live-dot{width:5px;height:5px;background:#d9bb7a;border-radius:50%}.typing{position:absolute;top:55%;left:50%;transform:translate(-50%,-50%);text-align:center;filter:drop-shadow(0 3px 15px #34221450);white-space:nowrap}.typing>small{font-size:9px;font-weight:700;letter-spacing:2.4px;background:#32281ff0;padding:8px 14px;border-radius:5px 5px 0 0}.word{display:flex;gap:7px;padding:12px 15px;background:#2d241eed;border:1px solid #ead2a052;border-radius:12px;box-shadow:0 10px 25px #39291e30}.word span{font:600 36px 'Outfit';width:40px;padding-bottom:5px;color:#d5c7b0;border-bottom:2px solid #ffffff20}.word .done{color:#b7d589;border-color:#b7d589}.word .current{color:#ffdf9c;border-color:#ffdf9c;background:#ffe0a00a}.typing-hint{display:flex;justify-content:center;gap:15px;font-size:8px;background:#2d241ee8;border-radius:0 0 8px 8px;padding:8px 12px;width:max-content;margin:auto;color:#c8baa5}.typing-hint b{color:#f5dfb4}.feedback{font:800 25px 'Outfit';color:#ffe1a0;opacity:0;height:40px;text-shadow:0 2px 5px #54331d;transition:opacity .15s}.feedback.show{opacity:1}.shake{animation:shake .25s}@keyframes shake{25%,75%{transform:translateX(-7px)}50%{transform:translateX(7px)}}footer{position:absolute;bottom:18px;left:36px;right:36px}.scoreboard{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.score{display:flex;align-items:center;gap:12px;position:relative;background:#2c241eea;border:1px solid #efdab22a;border-radius:12px;padding:16px 17px}.score.you{border-color:#e2bd6e99;background:#342b21ed}.avatar{width:43px;height:43px;border-radius:50%;background:color-mix(in srgb,var(--accent) 20%,#322a23);color:var(--accent);border:1px solid var(--accent);display:grid;place-items:center;font-size:30px}.score span{font-size:12px}.score small{font-size:7px;letter-spacing:1px;background:#e4bc6630;color:#e8c77d;margin-left:7px;padding:3px 4px;border-radius:3px}.score strong{display:block;font:500 28px 'Outfit';color:var(--accent)}.score em{font:400 9px 'DM Sans';color:#b7aa95;font-style:normal}.score .bot-style{position:absolute;right:14px;bottom:20px;font-size:6px;letter-spacing:1px;color:#ac9b83}.footer-note{display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-size:9px;color:#c0ad92}.footer-note button{color:#ddcdb5;background:none;border:none;font-size:12px}.footer-note button span{margin-left:5px;font-size:9px}.overlay{position:absolute;inset:0;display:grid;place-items:center;background:#22170f63;backdrop-filter:blur(3px)}.modal{width:430px;text-align:center;padding:30px 35px;background:#2c251ef5;border:1px solid #d7b77a66;border-radius:20px;box-shadow:0 30px 100px #1d120a66}.eyebrow{font-size:8px;letter-spacing:2.5px;color:#d9bd83}.ornament{font-size:33px;color:#e5bf76;margin-top:13px}h1{font:600 43px/1.08 'Outfit';letter-spacing:-1.5px;margin:12px 0 16px}h1 i{font-style:normal;color:#eac780}.modal p{font-size:12px;line-height:1.8;color:#c5b7a3;margin:0 0 24px}.rules{display:flex;justify-content:space-between;margin-bottom:25px;font-size:9px;color:#ddcdb5}.rules b{display:block;font:500 16px 'Outfit';color:#e8c888;margin-bottom:5px}.primary{width:100%;border:0;border-radius:8px;background:#e9c47c;color:#30271d;padding:15px 20px;text-align:left;font-size:11px;font-weight:800;letter-spacing:1px;box-shadow:0 4px 0 #b48b4a;transition:background .15s}.primary:hover{background:#ffdfa0}.primary span{float:right;font-size:17px;line-height:12px}.modal>small{display:block;font-size:6.5px;letter-spacing:1px;color:#a89983;margin-top:19px}.rankings{margin:20px 0 26px}.rankings>div{display:flex;align-items:center;gap:18px;padding:12px;border-bottom:1px solid #ffffff10;font-size:13px}.rankings>div:first-child{background:#eac77912;border-radius:6px;color:#edcb86}.rankings>div>span{width:20px;color:#bcaa8b}.rankings strong{margin-left:auto;font:600 22px 'Outfit'}.rankings small{font:400 9px 'DM Sans';color:#b8a990}.results h1{font-size:36px}.help{position:absolute;right:35px;bottom:150px;width:310px;background:#30271ff5;border:1px solid #c9aa70;border-radius:12px;padding:24px;font-size:12px;line-height:1.7;box-shadow:0 15px 40px #0005}.help p{color:#c9bba7}.help button{float:right;background:none;border:0;color:#e8cc98;font-size:20px}@media(max-width:700px){header{top:18px;left:16px;right:16px}.brand{font-size:16px;gap:6px}.brand-mark{font-size:29px}.brand small{font-size:6px;letter-spacing:1px}.timer{font-size:25px;padding:8px 12px;top:59px}.timer small{font-size:6px}.clock{font-size:23px}.remaining{width:140px;padding:10px}.remaining strong{font-size:23px}.remaining small{font-size:5px}.remaining>div:first-child{font-size:10px}.scene-label{top:76px;left:17px;font-size:6px}footer{left:12px;right:12px;bottom:12px}.scoreboard{gap:5px}.score{padding:10px 7px;gap:5px;justify-content:center}.avatar{display:none}.score .bot-style{display:none}.score strong{font-size:24px}.score span{font-size:10px}.score small{display:none}.footer-note>span{max-width:220px;font-size:7px}.modal{width:min(90vw,410px);padding:24px}.word span{font-size:28px;width:29px}.typing{top:52%}.help{right:15px;bottom:125px}.modal h1{font-size:36px}}@media(prefers-reduced-motion:reduce){.shake{animation:none}*{transition:none!important}}
+@import url('https://fonts.googleapis.com/css2?family=Changa:wght@700;800;900&family=Nunito:wght@700;800;900&family=Outfit:wght@800;900&display=swap');
+
+:root {
+  font-family: 'Changa', 'Nunito', sans-serif;
+  color: #fff8ee;
+  background: #1e150f;
+  font-synthesis: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  user-select: none;
+  overflow: hidden;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+
+button:focus-visible {
+  outline: 2px solid #f5d676;
+  outline-offset: 3px;
+}
+
+.game {
+  position: relative;
+  width: 100%;
+  height: 100svh;
+  min-height: 560px;
+  overflow: hidden;
+}
+
+canvas {
+  display: block;
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at center, transparent 45%, rgba(18, 11, 7, 0.65) 100%),
+    linear-gradient(180deg, rgba(28, 18, 12, 0.3) 0%, transparent 20%, transparent 80%, rgba(20, 12, 8, 0.65) 100%);
+  z-index: 2;
+}
+
+/* ==========================================================================
+   BUTTON SYSTEM (Primary, Secondary, Danger)
+   ========================================================================== */
+.primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(180deg, #f5d676, #c8953c);
+  border: 1.5px solid #fff3d6;
+  border-bottom: 3.5px solid #7c581a;
+  border-radius: 12px;
+  color: #271b12;
+  font: 900 14px/1 'Changa', sans-serif;
+  letter-spacing: 0.5px;
+  padding: 12px 22px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+.primary-btn:hover {
+  background: linear-gradient(180deg, #ffe59e, #db9f45);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.primary-btn:active {
+  transform: translateY(2px);
+  border-bottom-width: 1.5px;
+}
+
+.secondary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(28, 18, 12, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(233, 196, 124, 0.35);
+  border-bottom: 3.5px solid rgba(160, 120, 60, 0.4);
+  border-radius: 12px;
+  color: #fff8ee;
+  font: 800 14px/1 'Changa', sans-serif;
+  padding: 11px 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+.secondary-btn:hover {
+  background: rgba(45, 30, 20, 0.95);
+  border-color: rgba(233, 196, 124, 0.6);
+  color: #f5d676;
+  transform: translateY(-1px);
+}
+.secondary-btn:active {
+  transform: translateY(2px);
+  border-bottom-width: 1.5px;
+}
+
+.danger-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(180deg, #e74c3c, #c0392b);
+  border: 1.5px solid #ff9e9e;
+  border-bottom: 3.5px solid #781e14;
+  border-radius: 12px;
+  color: #ffffff;
+  font: 900 14px/1 'Changa', sans-serif;
+  letter-spacing: 0.5px;
+  padding: 12px 22px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+.danger-btn:hover {
+  background: linear-gradient(180deg, #ff5f4d, #d63031);
+  transform: translateY(-2px);
+}
+.danger-btn:active {
+  transform: translateY(2px);
+  border-bottom-width: 1.5px;
+}
+
+/* ==========================================================================
+   TOP HEADER HUD (Logo Left, Mansaf % + Menu Button Right)
+   ========================================================================== */
+.game-hud-header {
+  position: absolute;
+  top: 22px;
+  left: 26px;
+  right: 26px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.hud-logo-stamp {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  transition: transform 0.2s ease;
+}
+.hud-logo-stamp:hover {
+  transform: scale(1.04);
+}
+.hud-logo-img {
+  height: 112px;
+  width: auto;
+  max-width: 360px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.75)) drop-shadow(0 2px 5px rgba(0, 0, 0, 0.5));
+}
+
+.top-right-hud {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+.hud-widget-box {
+  background: rgba(24, 16, 11, 0.90);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(233, 196, 124, 0.28);
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+}
+
+.hud-widget-box.remaining-widget {
+  width: 190px;
+  padding: 8px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.widget-label {
+  font: 800 11px 'Changa';
+  letter-spacing: 0.5px;
+  color: #b8a994;
+  text-transform: uppercase;
+}
+.widget-value {
+  font: 900 24px/1 'Changa';
+  color: #f5d676;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.widget-value em {
+  font-style: normal;
+  font-size: 14px;
+  color: #b8a994;
+  font-weight: 700;
+}
+.widget-bar-track {
+  height: 6px;
+  background: #120b07;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 2px;
+}
+.widget-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7cb342, #8bc34a);
+  border-radius: 6px;
+  transition: width 0.25s ease-out;
+  box-shadow: 0 0 8px rgba(139, 195, 74, 0.5);
+}
+
+.hud-widget-box.menu-btn {
+  height: 48px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(180deg, #f5d676, #c8953c);
+  border: 1.5px solid #fff3d6;
+  border-bottom: 3.5px solid #7c581a;
+  border-radius: 14px;
+  color: #271b12;
+  font: 900 14px 'Changa', sans-serif;
+  letter-spacing: 0.5px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+.hud-widget-box.menu-btn:hover {
+  background: linear-gradient(180deg, #ffe59e, #db9f45);
+  transform: translateY(-2px);
+}
+.hud-widget-box.menu-btn:active {
+  transform: translateY(2px);
+  border-bottom-width: 1.5px;
+}
+
+.hud-widget-box.lang-btn {
+  height: 48px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(28, 18, 12, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(233, 196, 124, 0.35);
+  border-bottom: 3.5px solid rgba(160, 120, 60, 0.4);
+  border-radius: 14px;
+  color: #fff8ee;
+  font: 800 14px 'Changa', sans-serif;
+  letter-spacing: 0.5px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+.hud-widget-box.lang-btn:hover {
+  background: rgba(45, 30, 20, 0.95);
+  border-color: rgba(245, 214, 118, 0.6);
+  transform: translateY(-2px);
+}
+.hud-widget-box.lang-btn:active {
+  transform: translateY(2px);
+  border-bottom-width: 1.5px;
+}
+
+.btn-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* ==========================================================================
+   CONTEXTUAL INSTRUCTIONS & KEYBOARDS HUD (Floating Bottom-Center)
+   ========================================================================== */
+.contextual-hud-container {
+  position: absolute;
+  left: 50%;
+  bottom: 96px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  z-index: 10;
+  width: max-content;
+}
+
+.hud-feedback-toast {
+  font: 900 16px 'Changa';
+  color: #f5d676;
+  background: rgba(24, 16, 11, 0.94);
+  backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(233, 196, 124, 0.45);
+  padding: 6px 18px;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  animation: feedbackPop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes feedbackPop {
+  0% { opacity: 0; transform: scale(0.85) translateY(10px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.hud-floating-panel {
+  background: rgba(24, 16, 11, 0.90);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(233, 196, 124, 0.28);
+  border-radius: 16px;
+  padding: 12px 24px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+.hud-floating-panel.is-target-hit {
+  border-color: #2ecc71;
+  box-shadow: 0 0 25px rgba(46, 204, 113, 0.6);
+}
+
+.hud-state-fade {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 800 14px 'Changa';
+  color: #fff8ee;
+}
+
+.hud-label-primary {
+  font: 800 15px 'Changa';
+  color: #f5d676;
+}
+.hud-label-action {
+  font: 900 15px 'Changa';
+  color: #2ecc71;
+}
+.hud-label-sub {
+  font: 800 13px 'Changa';
+  color: #b8a994;
+}
+.hud-text-sub {
+  font: 700 12px 'Changa';
+  color: #b8a994;
+}
+.hud-dot-sep {
+  color: rgba(233, 196, 124, 0.4);
+  font-size: 14px;
+  margin: 0 4px;
+}
+
+.key-action-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.arrows-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.hud-hold-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 3D Mechanical Key Cap Component */
+.key-cap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #4a3627, #241a12 70%, #180f09);
+  border: 2px solid rgba(245, 214, 118, 0.55);
+  border-bottom: 4px solid #0d0805;
+  border-radius: 9px;
+  padding: 4px 12px;
+  min-width: 34px;
+  height: 36px;
+  font: 900 16px 'Changa', sans-serif;
+  color: #fff8ee;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.55), 0 7px 16px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 -4px 8px rgba(0, 0, 0, 0.35);
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+  transition: transform 0.15s ease;
+}
+
+/* Wide gold "spacebar" variant — the primary action key stands apart from the arrows */
+.key-cap-wide {
+  min-width: 96px;
+  padding: 4px 18px;
+  background: linear-gradient(180deg, #f5d676, #c8953c 70%, #a97a2c);
+  border: 2px solid #fff3d6;
+  border-bottom: 4px solid #7c581a;
+  color: #271b12;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 0 #7c581a, 0 7px 16px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.arrows-group .key-cap {
+  font-size: 18px;
+}
+
+.release-target-badge {
+  font: 900 15px 'Changa';
+  color: #ffffff;
+  background: #2ecc71;
+  padding: 5px 16px;
+  border-radius: 10px;
+  letter-spacing: 1px;
+  box-shadow: 0 0 16px rgba(46, 204, 113, 0.7);
+  animation: pulseGreen 0.5s infinite alternate;
+}
+@keyframes pulseGreen {
+  0% { transform: scale(0.97); opacity: 0.9; }
+  100% { transform: scale(1.04); opacity: 1; }
+}
+
+/* Compact Lokma Gauge */
+.lokma-meter-compact {
+  width: 280px;
+  background: rgba(24, 16, 11, 0.94);
+  backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(233, 196, 124, 0.35);
+  border-radius: 14px;
+  padding: 8px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+}
+.lokma-meter-compact.is-perfect {
+  border-color: #2ecc71;
+  box-shadow: 0 0 20px rgba(46, 204, 113, 0.5);
+}
+.meter-bar-track {
+  position: relative;
+  height: 14px;
+  background: #120b07;
+  border-radius: 7px;
+  overflow: hidden;
+  display: flex;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+.meter-bar-track .zone {
+  height: 100%;
+}
+.meter-bar-track .zone-under {
+  background: linear-gradient(90deg, #c0392b, #e67e22);
+}
+.meter-bar-track .zone-green {
+  background: linear-gradient(90deg, #27ae60, #2ecc71);
+}
+.meter-bar-track .zone-over {
+  background: linear-gradient(90deg, #e67e22, #c0392b);
+}
+.meter-needle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #ffffff;
+  transform: translateX(-50%);
+  box-shadow: 0 0 8px #ffffff;
+  z-index: 2;
+}
+
+.meter-status {
+  text-align: center;
+  font: 800 12px 'Changa';
+}
+.badge-release {
+  color: #2ecc71;
+  font-weight: 900;
+}
+.badge-warning {
+  color: #e74c3c;
+  font-weight: 800;
+}
+.badge-hold {
+  color: #f5d676;
+  font-weight: 800;
+}
+.badge-perfect {
+  color: #2ecc71;
+  font-weight: 900;
+}
+.badge-under {
+  color: #e67e22;
+  font-weight: 800;
+}
+
+/* ==========================================================================
+   MULTIPLAYER SCOREBOARD (Bottom HUD with Live Ranks & Character Photos)
+   ========================================================================== */
+.scoreboard-footer {
+  position: absolute;
+  bottom: 20px;
+  left: 26px;
+  right: 26px;
+  z-index: 10;
+}
+
+.scoreboard-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.player-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(24, 16, 11, 0.90);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(233, 196, 124, 0.28);
+  border-radius: 16px;
+  padding: 8px 14px;
+  height: 56px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.45);
+  transition: all 0.2s ease;
+}
+.player-card.is-you {
+  border-color: rgba(233, 196, 124, 0.65);
+  box-shadow: 0 0 20px rgba(233, 196, 124, 0.3);
+}
+.player-card.is-leader {
+  border-color: #f5d676;
+}
+
+/* Rank Pill Badge */
+.rank-pill {
+  position: absolute;
+  top: -10px;
+  left: 14px;
+  font: 800 10px 'Changa';
+  letter-spacing: 0.5px;
+  background: rgba(18, 12, 8, 0.95);
+  color: #b8a994;
+  border: 1px solid rgba(233, 196, 124, 0.35);
+  padding: 1px 7px;
+  border-radius: 6px;
+}
+.rank-pill.gold-rank {
+  background: #f5d676;
+  color: #271b12;
+  border-color: #fff3d6;
+  font-weight: 900;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+.player-avatar-ring {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 2px solid var(--player-color, #e9c47c);
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
+  background: #140d09;
+}
+.avatar-img-wrapper {
+  width: 100%;
+  height: 100%;
+}
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.player-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.player-name-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.player-name {
+  font: 800 14px 'Changa';
+  color: #fff8ee;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.you-badge {
+  font: 800 9px 'Changa';
+  letter-spacing: 0.5px;
+  background: rgba(245, 214, 118, 0.25);
+  color: #f5d676;
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid rgba(245, 214, 118, 0.4);
+}
+.player-trait {
+  font: 600 11px 'Nunito';
+  color: #b8a994;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-score-box {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  flex-shrink: 0;
+}
+.player-score {
+  font: 900 26px/1 'Changa';
+  color: #f5d676;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+.score-pts {
+  font: 700 11px 'Changa';
+  color: #b8a994;
+}
+
+/* Floating +N Score Animation */
+.score-pop-anim {
+  position: absolute;
+  top: -16px;
+  right: 14px;
+  font: 900 18px 'Changa';
+  color: #f5d676;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+  animation: floatUpFade 0.9s ease-out forwards;
+}
+@keyframes floatUpFade {
+  0% { opacity: 1; transform: translateY(0) scale(0.9); }
+  50% { opacity: 1; transform: translateY(-12px) scale(1.15); }
+  100% { opacity: 0; transform: translateY(-24px) scale(1); }
+}
+
+/* ==========================================================================
+   MODAL OVERLAYS (Soft Translucent, Purpose-Built Unique Layouts)
+   ========================================================================== */
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(14, 9, 6, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 100;
+  padding: 20px;
+}
+
+.modal {
+  background: rgba(24, 16, 11, 0.95);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1.5px solid rgba(233, 196, 124, 0.35);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+  position: relative;
+  overflow: hidden;
+}
+
+.eyebrow {
+  display: block;
+  font: 800 11px 'Changa';
+  letter-spacing: 2.5px;
+  color: #f5d676;
+  text-transform: uppercase;
+}
+.modal h2 {
+  font: 900 28px 'Changa';
+  margin: 4px 0 14px;
+  color: #fff8ee;
+}
+
+/* 1. INTRO TUTORIAL - UNIQUE TWO-COLUMN HERO LAYOUT */
+.intro-modal-layout {
+  width: 660px;
+  max-width: 94vw;
+  padding: 32px 36px;
+}
+.intro-split-container {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 28px;
+  align-items: center;
+  text-align: left;
+}
+.step-pill {
+  font: 800 11px 'Changa';
+  letter-spacing: 1.5px;
+  color: #f5d676;
+  background: rgba(245, 214, 118, 0.15);
+  border: 1px solid rgba(245, 214, 118, 0.3);
+  padding: 4px 10px;
+  border-radius: 6px;
+  display: inline-block;
+  margin-bottom: 10px;
+}
+.intro-info-col h3 {
+  font: 800 20px 'Changa';
+  margin: 0 0 8px;
+  color: #fff8ee;
+}
+.intro-info-col p {
+  font: 600 14px/1.6 'Nunito';
+  color: #b8a994;
+  margin: 0 0 18px;
+}
+.hero-photo-card {
+  background: rgba(16, 10, 7, 0.85);
+  border: 1.5px solid rgba(233, 196, 124, 0.28);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+}
+.hero-character-img {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 3px solid #e9c47c;
+  object-fit: cover;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+}
+.photo-caption-badge {
+  font: 800 12px 'Changa';
+  color: #f5d676;
+  background: rgba(245, 214, 118, 0.15);
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(245, 214, 118, 0.3);
+}
+
+.stepper-dots {
+  display: flex;
+  justify-content: flex-start;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.stepper-dots .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.stepper-dots .dot.active {
+  background: #f5d676;
+  transform: scale(1.3);
+  box-shadow: 0 0 8px #f5d676;
+}
+
+.intro-actions {
+  display: flex;
+  gap: 12px;
+}
+
+/* 2. PAUSE MENU - UNIQUE COMPACT VERTICAL DRAWER LAYOUT */
+.menu-modal-layout {
+  width: 340px;
+  max-width: 90vw;
+  padding: 28px 32px;
+  text-align: center;
+}
+.menu-action-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+/* 3. HOW TO PLAY GUIDE - UNIQUE 2x2 GRID CARD LAYOUT */
+.guide-modal-layout {
+  width: 600px;
+  max-width: 94vw;
+  padding: 32px;
+  text-align: center;
+}
+.guide-2x2-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 20px 0;
+}
+.guide-card {
+  background: rgba(16, 10, 7, 0.85);
+  border: 1.5px solid rgba(233, 196, 124, 0.28);
+  border-radius: 14px;
+  padding: 16px;
+  text-align: left;
+}
+.guide-card-icon {
+  font-size: 26px;
+  margin-bottom: 6px;
+}
+.guide-card b {
+  display: block;
+  font: 800 15px 'Changa';
+  color: #fff8ee;
+  margin-bottom: 4px;
+}
+.guide-card p {
+  font: 600 13px/1.5 'Nunito';
+  color: #b8a994;
+  margin: 0;
+}
+.guide-close-btn {
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* 4. GAME OVER RESULTS - UNIQUE VICTORY PODIUM LAYOUT, split into WIN / LOSE moods */
+.results-modal-layout {
+  width: 520px;
+  max-width: 92vw;
+  padding: 32px 36px;
+  text-align: center;
+}
+
+.result-badge-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  border-radius: 50%;
+  background: rgba(245, 214, 118, 0.12);
+  border: 1.5px solid rgba(245, 214, 118, 0.35);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  position: relative;
+  z-index: 1;
+}
+.results-modal-layout.is-win .result-badge-icon {
+  background: rgba(245, 214, 118, 0.22);
+  border-color: #f5d676;
+  box-shadow: 0 0 24px rgba(245, 214, 118, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  animation: winBadgePulse 1.4s ease-in-out infinite;
+}
+@keyframes winBadgePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+.results-modal-layout.is-lose .result-badge-icon {
+  background: rgba(184, 169, 148, 0.12);
+  border-color: rgba(184, 169, 148, 0.4);
+}
+
+.results-modal-layout.is-win h2 {
+  color: #f5d676;
+  text-shadow: 0 0 20px rgba(245, 214, 118, 0.6), 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+.results-modal-layout.is-lose h2 {
+  color: #e8b98a;
+}
+
+.result-subline {
+  position: relative;
+  z-index: 1;
+  font: 600 14px/1.5 'Nunito';
+  color: #b8a994;
+  margin: -6px 0 4px;
+}
+
+/* Confetti burst — win only */
+.confetti-burst {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.confetti-piece {
+  position: absolute;
+  top: -14px;
+  width: 8px;
+  height: 14px;
+  opacity: 0.9;
+  border-radius: 2px;
+  animation: confettiFall 2.6s linear infinite;
+}
+@keyframes confettiFall {
+  0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(420px) rotate(540deg); opacity: 0; }
+}
+.results-modal-layout > *:not(.confetti-burst) {
+  position: relative;
+  z-index: 1;
+}
+.results-modal-layout.is-win .winner-spotlight-card {
+  border-color: rgba(245, 214, 118, 0.7);
+  box-shadow: 0 0 26px rgba(245, 214, 118, 0.4);
+}
+.winner-spotlight-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: rgba(245, 214, 118, 0.12);
+  border: 1.5px solid rgba(245, 214, 118, 0.45);
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin: 18px 0;
+  text-align: left;
+}
+.winner-crown-badge {
+  position: absolute;
+  top: -12px;
+  right: 16px;
+  font: 900 11px 'Changa';
+  letter-spacing: 0.5px;
+  background: #f5d676;
+  color: #271b12;
+  padding: 3px 10px;
+  border-radius: 6px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+.winner-avatar-img {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  border: 2.5px solid #f5d676;
+  object-fit: cover;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+.winner-details {
+  flex: 1;
+}
+.winner-details h3 {
+  font: 900 20px 'Changa';
+  margin: 0 0 4px;
+  color: #fff8ee;
+}
+.winner-trait-badge {
+  display: inline-block;
+  font: 700 12px 'Nunito';
+  color: #b8a994;
+  margin-bottom: 4px;
+}
+.winner-score-tag {
+  font: 900 16px 'Changa';
+  color: #f5d676;
+}
+
+.leaderboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+.rank-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  background: rgba(16, 10, 7, 0.7);
+  border: 1px solid rgba(233, 196, 124, 0.2);
+  border-radius: 12px;
+  font: 800 14px 'Changa';
+}
+.rank-row.top-rank {
+  border-color: rgba(245, 214, 118, 0.4);
+  background: rgba(245, 214, 118, 0.08);
+}
+.rank-num {
+  font: 900 14px 'Changa';
+  color: #b8a994;
+  width: 24px;
+}
+.rank-img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(233, 196, 124, 0.4);
+  object-fit: cover;
+}
+.rank-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+.rank-name {
+  color: #fff8ee;
+  font-size: 14px;
+}
+.rank-trait {
+  color: #b8a994;
+  font: 600 11px 'Nunito';
+}
+.rank-score {
+  font: 900 16px 'Changa';
+  color: #f5d676;
+}
+
+.results-actions {
+  display: flex;
+  justify-content: center;
+}
+.results-actions .primary-btn {
+  width: 100%;
+}
+
+.close-btn {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  background: none;
+  border: none;
+  color: #f5d676;
+  font: 900 24px/1 'Changa';
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.close-btn:hover {
+  transform: scale(1.2);
+}
+
+/* Responsive Overrides */
+@media (max-width: 700px) {
+  .game-hud-header {
+    top: 14px;
+    left: 14px;
+    right: 14px;
+  }
+  .hud-logo-img {
+    height: 60px;
+  }
+  .remaining-hud-box {
+    width: 130px;
+    padding: 6px 10px;
+  }
+  .hud-menu-btn {
+    height: 40px;
+    padding: 0 14px;
+    font-size: 12px;
+  }
+  .scoreboard-footer {
+    left: 10px;
+    right: 10px;
+    bottom: 12px;
+  }
+  .scoreboard-grid {
+    gap: 8px;
+  }
+  .player-card {
+    padding: 4px 8px;
+    height: 48px;
+    gap: 8px;
+  }
+  .player-avatar-ring {
+    width: 34px;
+    height: 34px;
+  }
+  .player-score {
+    font-size: 20px;
+  }
+  .player-trait {
+    display: none;
+  }
+  .contextual-hud-container {
+    bottom: 78px;
+  }
+  .intro-split-container, .guide-2x2-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================================
+   RTL (RIGHT-TO-LEFT) ARABIC LAYOUT ADJUSTMENTS
+   ========================================================================== */
+[dir="rtl"] {
+  font-family: 'Changa', sans-serif;
+}
+
+/* Modals & Guidance Panels (Right-aligned reading flow for Arabic) */
+[dir="rtl"] .intro-info-col {
+  text-align: right;
+}
+
+[dir="rtl"] .intro-actions {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .guide-card {
+  text-align: right;
+}
+
+[dir="rtl"] .close-btn {
+  left: 18px;
+  right: auto;
+}
+
+[dir="rtl"] .winner-spotlight-card {
+  text-align: right;
+}
+
+[dir="rtl"] .winner-crown-badge {
+  left: 16px;
+  right: auto;
+}
+
+[dir="rtl"] .rank-info {
+  text-align: right;
+}
+
+/* Bottom Widgets (Scoreboard & Contextual Key Assistant):
+   Preserve LTR spatial ordering so 4 player cards match 3D seats (You, Zaid, Omar, Sami)
+   and keyboard arrow keys remain physically accurate. */
+[dir="rtl"] .scoreboard-footer,
+[dir="rtl"] .scoreboard-grid,
+[dir="rtl"] .contextual-hud-container,
+[dir="rtl"] .hud-floating-panel,
+[dir="rtl"] .lokma-meter-compact {
+  direction: ltr;
+}
+

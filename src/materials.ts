@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import pattern1Url from './assets/pattern 1.png';
+import pattern2Url from './assets/pattern 2.png';
+import pattern3Url from './assets/pattern 3.png';
 
 function canvasTexture(draw: (ctx: CanvasRenderingContext2D) => void, repeats: [number, number] = [1, 1]) {
   const canvas = document.createElement('canvas'); canvas.width = canvas.height = 512;
@@ -8,6 +11,7 @@ function canvasTexture(draw: (ctx: CanvasRenderingContext2D) => void, repeats: [
   texture.repeat.set(...repeats); texture.anisotropy = 8;
   return texture;
 }
+
 export function textile(repeats: [number, number] = [2, 1]) {
   return canvasTexture(ctx => {
     ctx.fillStyle = '#86282e'; ctx.fillRect(0, 0, 512, 512);
@@ -30,6 +34,56 @@ export function textile(repeats: [number, number] = [2, 1]) {
     ctx.fillStyle = '#0000000c'; for (let i = 0; i < 512; i += 4) ctx.fillRect(0, i, 512, 1);
   }, repeats);
 }
+
+export function minimalTextile(repeats: [number, number] = [2, 1]) {
+  return canvasTexture(ctx => {
+    // Rich Sadu Maroon base
+    ctx.fillStyle = '#86282e';
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Clean, minimal accent stripes (top & bottom borders only)
+    ctx.fillStyle = '#c5a178';
+    ctx.fillRect(0, 24, 512, 4);
+    ctx.fillRect(0, 484, 512, 4);
+
+    ctx.fillStyle = '#29292a';
+    ctx.fillRect(0, 36, 512, 8);
+    ctx.fillRect(0, 468, 512, 8);
+
+    ctx.fillStyle = '#c5a178';
+    ctx.fillRect(0, 48, 512, 3);
+    ctx.fillRect(0, 461, 512, 3);
+
+    // Subtle fine weave texture for tactile fabric depth
+    ctx.fillStyle = '#f9d1a00d';
+    for (let i = 0; i < 512; i += 4) ctx.fillRect(i, 0, 1, 512);
+    ctx.fillStyle = '#00000010';
+    for (let i = 0; i < 512; i += 4) ctx.fillRect(0, i, 512, 1);
+  }, repeats);
+}
+
+export function loadTexturePattern(url: string, repeatS = 1, repeatT = 1) {
+  const texture = new THREE.TextureLoader().load(url);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(repeatS, repeatT);
+  texture.anisotropy = 8;
+  return texture;
+}
+
+export function cushionPattern(repeats: [number, number] = [3, 1.5]) {
+  return loadTexturePattern(pattern1Url, repeats[0], repeats[1]);
+}
+
+export function rugPattern(repeats: [number, number] = [4, 4]) {
+  return loadTexturePattern(pattern2Url, repeats[0], repeats[1]);
+}
+
+export function wallRugPattern(repeats: [number, number] = [1, 1]) {
+  return loadTexturePattern(pattern1Url, repeats[0], repeats[1]);
+}
+
 export function keffiyeh() {
   return canvasTexture(ctx => {
     ctx.fillStyle = '#fff0da'; ctx.fillRect(0, 0, 512, 512);

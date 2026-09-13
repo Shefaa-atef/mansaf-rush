@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, type RefObject } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { Lokma } from './lokma';
+import { riceRollingMotion } from './riceRollingMotion';
 
 /** Local palm coordinates: loose food sits toward the heel, formed food near the knuckles. */
 export const FOOD_HOLDING_REGION = {
@@ -11,7 +12,7 @@ export const FOOD_HOLDING_REGION = {
 
 export function HandFood({ game }: { game: RefObject<{ lokma: Lokma; phase: string }> }) {
   const root = useRef<THREE.Group>(null), rice = useRef<THREE.InstancedMesh>(null);
-  const mass = useRef<THREE.Mesh>(null), bread = useRef<THREE.Group>(null), lamb = useRef<THREE.Mesh>(null);
+  const mass = useRef<THREE.Mesh>(null), bread = useRef<THREE.Group>(null), lamb = useRef<THREE.Mesh>(null), almond = useRef<THREE.Mesh>(null);
   const smooth = useRef({ formation: 0, amount: 0, count: 0 });
   const resources = useMemo(() => {
     const grain = new THREE.SphereGeometry(1, 6, 4);
@@ -41,16 +42,24 @@ export function HandFood({ game }: { game: RefObject<{ lokma: Lokma; phase: stri
     if (!root.current || !rice.current) return;
     root.current.visible = game.current.phase !== 'ended' && l.amount > 0 && !l.swallowed;
     if (!root.current.visible) { state.formation = 0; state.amount = 0; state.count = 0; return; }
-    state.formation += (Math.min(1, l.rolls / 4) - state.formation) * blend;
+    const shaping = riceRollingMotion(l, performance.now());
+    state.formation += (shaping.formation - state.formation) * blend;
     state.amount += (l.amount - state.amount) * blend;
     const form = state.formation, size = .62 + .34 * Math.cbrt(Math.min(state.amount, 7) / 6);
     root.current.position.lerpVectors(FOOD_HOLDING_REGION.loose, FOOD_HOLDING_REGION.formed, form);
-    root.current.position.y += .072 * form * size;
-    root.current.scale.setScalar(size);
+    root.current.position.y += .092 * form * size;
+    root.current.position.x += shaping.x;
+    root.current.position.z += shaping.z;
+    // Rolling has a horizontal axis; spinning around Y made the rice look like a top.
+    root.current.rotation.set(shaping.angle * .28, 0, -shaping.angle);
+    root.current.scale.set(size * (1 + shaping.compression * .3), size * (1 - shaping.compression), size * (1 + shaping.compression * .3));
     const count = Math.min(80, Math.ceil(Math.max(0, state.amount - l.bread) * 11.4));
     resources.samples.forEach((sample, i) => {
       if (i >= count) return;
       if (i >= state.count) sample.current.set(sample.loose.x * .8, .035, -.14);
+      const sphereY = 1 - 2 * (i + .5) / Math.max(1, count);
+      const ring = Math.sqrt(Math.max(0, 1 - sphereY * sphereY));
+      sample.formed.set(Math.cos(sample.angle) * ring * .092, sphereY * .092, Math.sin(sample.angle) * ring * .092);
       resources.target.lerpVectors(sample.loose, sample.formed, form);
       sample.current.lerp(resources.target, blend);
       resources.dummy.position.copy(sample.current);
@@ -64,7 +73,7 @@ export function HandFood({ game }: { game: RefObject<{ lokma: Lokma; phase: stri
     if (mass.current) {
       mass.current.visible = l.amount - l.bread > .1 && form > .15;
       const fill = THREE.MathUtils.smoothstep(form, .15, .9);
-      mass.current.scale.set(.086 * fill, .060 * fill, .085 * fill);
+      mass.current.scale.setScalar(.086 * fill);
     }
     if (bread.current) {
       bread.current.children.forEach((piece, i) => {
@@ -75,6 +84,7 @@ export function HandFood({ game }: { game: RefObject<{ lokma: Lokma; phase: stri
       });
     }
     if (lamb.current) lamb.current.visible = l.meat;
+    if (almond.current) almond.current.visible = l.almond;
   }, -1);
 
   return <group ref={root} name="food-holding-region" visible={false}>
@@ -86,5 +96,6 @@ export function HandFood({ game }: { game: RefObject<{ lokma: Lokma; phase: stri
       <mesh key={i} scale={[.038, .005, .030]}><dodecahedronGeometry args={[1, 0]} /><meshStandardMaterial color={i % 3 ? '#d6b279' : '#b98b54'} roughness={.95} /></mesh>
     )}</group>
     <mesh ref={lamb} position={[.02, .045, -.02]} scale={[.040, .026, .033]}><dodecahedronGeometry args={[1, 0]} /><meshStandardMaterial color="#895638" /></mesh>
+    <mesh ref={almond} position={[-.035, .074, .015]} scale={[.018, .012, .031]}><sphereGeometry args={[1, 12, 8]} /><meshStandardMaterial color="#bd8549" roughness={.8} /></mesh>
   </group>;
 }

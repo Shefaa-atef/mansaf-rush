@@ -3,6 +3,17 @@ import { test } from 'node:test';
 import * as THREE from 'three';
 import { keepHandAboveFood } from '../src/handClearance.ts';
 
+test('sampled skin ignores an empty bounding-box corner over a food obstacle', () => {
+  const hand = new THREE.Group(), anatomy = new THREE.Group();
+  anatomy.name = 'hand-anatomy'; hand.add(anatomy);
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute([-.2, 1, 0, .2, 1, 0, 0, 1, -.2], 3));
+  const skin = new THREE.Mesh(geometry); skin.userData.contactVertices = [0, 1, 2]; anatomy.add(skin);
+  const lift = keepHandAboveFood(hand, (x, z) => x > .1 && z < -.1 ? 2 : .5);
+  assert.equal(lift, 0, 'an obstacle below empty space must not make the hand jump');
+  geometry.dispose();
+});
+
 test('palm, thumb and curled fingertips clear food for both hand orientations', () => {
   for (const flip of [0, -.20, .22, Math.PI]) {
     const character = new THREE.Group();

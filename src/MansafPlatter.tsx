@@ -47,6 +47,7 @@ export function foodSurface(x: number, z: number, remaining: number) {
     height: .24 + riceHeight(x, z, remaining),
     available: Math.hypot(x, z) < 2.12 && platterFood.breadAvailable(patchIndex(x, z)),
     bread: !availablePatch(patchIndex(x, z)) && platterFood.breadAvailable(patchIndex(x, z)),
+    almond: almondParticles.some(p => Math.hypot(x - p.position[0], z - p.position[2]) < .16 && availablePatch(p.patch)),
     meat: meatPieces.some(p => Math.hypot(x - p.x, z - p.z) < p.size * 1.2 && availablePatch(patchIndex(p.x, p.z))),
   };
 }
@@ -290,7 +291,7 @@ function meatRestHeight(p: typeof meatPieces[number], remaining: number) {
 }
 function MeatPieces({ remaining }: { remaining: number }) {
   const map = useMemo(cookedLambTexture, []);
-  return <group name="MeatPieces">{meatPieces.map((p, i) => availablePatch(patchIndex(p.x, p.z)) && <group name={`lamb-piece-${i}`} key={i} position={[p.x, meatRestHeight(p, remaining), p.z]} rotation={[0, p.angle, 0]} scale={p.size}>
+  return <group name="MeatPieces">{meatPieces.map((p, i) => availablePatch(patchIndex(p.x, p.z)) && <group name={`lamb-piece-${i}`} key={i} position={[p.x, meatRestHeight(p, remaining), p.z]} rotation={[0, p.angle, 0]} scale={p.size * 0.85}>
     <mesh geometry={meatGeometry[i]} castShadow><meshStandardMaterial map={map} vertexColors roughness={.80} /></mesh>
   </group>)}</group>;
 }

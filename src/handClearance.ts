@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 
 const bounds = new THREE.Box3();
+const contact = new THREE.Vector3();
 
 /** Check the posed skin, including fingertips and thumb, against the food below it. */
 export function keepHandAboveFood(hand: THREE.Group, heightAt: (x: number, z: number) => number) {
@@ -10,6 +11,15 @@ export function keepHandAboveFood(hand: THREE.Group, heightAt: (x: number, z: nu
   let lift = 0;
   anatomy.traverse(node => {
     if (!(node instanceof THREE.Mesh)) return;
+    const samples = node.userData.contactVertices as number[] | undefined;
+    if (samples) {
+      // Use the animated surface, not a rotated bounding-box corner in empty air.
+      for (const index of samples) {
+        node.getVertexPosition(index, contact).applyMatrix4(node.matrixWorld);
+        lift = Math.max(lift, heightAt(contact.x, contact.z) + .018 - contact.y);
+      }
+      return;
+    }
     const geometry = node.geometry as THREE.BufferGeometry;
     if (!geometry.boundingBox) geometry.computeBoundingBox();
     bounds.copy(geometry.boundingBox!).applyMatrix4(node.matrixWorld);

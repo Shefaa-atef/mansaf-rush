@@ -1,5 +1,5 @@
 export type HandPoseName = 'OPEN' | 'GATHER' | 'CUP' | 'ROLL_LEFT' | 'ROLL_RIGHT' | 'HOLD_LOKMA' | 'EAT';
-export type HandMotion = { pose: HandPoseName; pulse: number };
+export type HandMotion = { pose: HandPoseName; pulse: number; weights?: Record<string, number> };
 export type FingerBend = [number, number, number];
 export type HandPose = {
   /** MCP, PIP, DIP bends; ordered pinky, ring, middle, index. */
