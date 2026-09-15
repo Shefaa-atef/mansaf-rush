@@ -1,3 +1,5 @@
+import { PolishedStudioCharacter } from './PolishedStudioCharacter';
+import { PolishedBlenderCharacter } from './PolishedBlenderCharacter';
 import { BlenderCharacter } from './BlenderCharacter';
 import { StudioCharacter } from './StudioCharacter';
 import { memo, useEffect, useMemo, useRef, type RefObject } from 'react';
@@ -151,5 +153,6 @@ const ProceduralCharacter = memo(function ProceduralCharacter({ id, game }: { id
 });
 
 export const Character = memo(function Character(props: { id: number; position: V3; angle: number; game: RefObject<Game> }) {
+  if (new URLSearchParams(window.location.search).get('characters') !== 'original') return props.id === 1 ? <PolishedStudioCharacter id={props.id} game={props.game} fallback={<ProceduralCharacter {...props}/>} onChew={botChew} onUnlock={enableBotSound}/> : <PolishedBlenderCharacter id={props.id} game={props.game} fallback={<ProceduralCharacter {...props}/>} onChew={botChew} onUnlock={enableBotSound}/>;
   return props.id === 1 ? <StudioCharacter id={props.id} game={props.game} fallback={<ProceduralCharacter {...props}/>} onChew={botChew} onUnlock={enableBotSound}/> : <BlenderCharacter id={props.id} game={props.game} fallback={<ProceduralCharacter {...props}/>} onChew={botChew} onUnlock={enableBotSound}/>;
 });

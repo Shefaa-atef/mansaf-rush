@@ -1,0 +1,267 @@
+import { extendArmForReach } from './characterArmProportions';
+import { botBiteWrist } from './botBiteMotion';
+import { CharacterHands } from './CharacterHands';
+import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { useFrame } from '@react-three/fiber';
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { botSeats } from './platterFood';
+import { foodSurface, foodObstacleHeight } from './MansafPlatter';
+import type { Game } from './main';
+type Rig = {
+    asset: THREE.Group;
+    upper: THREE.Bone;
+    fore: THREE.Bone;
+    hand: THREE.Bone;
+    fingers: THREE.Bone[];
+    rest: Map<THREE.Bone, THREE.Quaternion>;
+    mouths: THREE.Mesh[];
+    eyes: THREE.Mesh[];
+    head?: THREE.Bone;
+    chest?: THREE.Bone;
+    a: number;
+    b: number;
+    handBind: THREE.Quaternion;
+    handMeshes: THREE.SkinnedMesh[];
+};
+export function PolishedBlenderCharacter({ id, game, fallback, onChew, onUnlock }: {
+    id: number;
+    game: RefObject<Game>;
+    fallback: ReactNode;
+    onChew: () => void;
+    onUnlock: () => void;
+}) {
+    const [asset, setAsset] = useState<THREE.Group | null>(null);
+    const rig = useRef<Rig | null>(null), food = useRef<THREE.Group>(null), lastSound = useRef(0);
+    const p = useMemo(() => ({ idle: new THREE.Vector3(-.38, 1.20, .63), mouth: new THREE.Vector3(-.025, 1.53, .39), sample: new THREE.Vector3(), target: new THREE.Vector3(), goal: new THREE.Vector3(), shoulder: new THREE.Vector3(), elbow: new THREE.Vector3(), wrist: new THREE.Vector3(), direction: new THREE.Vector3(), pole: new THREE.Vector3(), axis: new THREE.Vector3(), q: new THREE.Quaternion(), worldQ: new THREE.Quaternion(), parentQ: new THREE.Quaternion(), curlQ: new THREE.Quaternion() }), []);
+    useEffect(() => {
+        let cancelled = false, loaded: THREE.Group | undefined;
+        const dispose = (scene: THREE.Object3D) => { const geometries = new Set<THREE.BufferGeometry>(), materials = new Set<THREE.Material>(), textures = new Set<THREE.Texture>(); scene.traverse(n => { if (n instanceof THREE.Mesh) {
+            geometries.add(n.geometry);
+            for (const m of Array.isArray(n.material) ? n.material : [n.material]) {
+                materials.add(m);
+                if (m instanceof THREE.MeshStandardMaterial && m.map)
+                    textures.add(m.map);
+            }
+        } }); geometries.forEach(g => g.dispose()); materials.forEach(m => m.dispose()); textures.forEach(t => t.dispose()); };
+        window.addEventListener('pointerdown', onUnlock);
+        new GLTFLoader().load([new URL('./assets/zaid-chibi-polished.glb', import.meta.url).href, new URL('./assets/omar-chibi-polished.glb', import.meta.url).href, new URL('./assets/sami-chibi-polished.glb', import.meta.url).href][id - 1], gltf => {
+            if (cancelled) {
+                dispose(gltf.scene);
+                return;
+            }
+            loaded = gltf.scene;
+            const seat = botSeats[id - 1];
+            loaded.position.set(seat[0], -.40, seat[1]);
+            loaded.rotation.set(.16, id === 1 ? .85 : id === 3 ? -.85 : 0, 0, 'YXZ');
+            loaded.scale.setScalar(.98);
+            const upper = loaded.getObjectByName('upper_arm_R'), fore = loaded.getObjectByName('forearm_R'), hand = loaded.getObjectByName('hand_R');
+            if (!(upper instanceof THREE.Bone) || !(fore instanceof THREE.Bone) || !(hand instanceof THREE.Bone)) {
+                console.error(`Character ${id} rig controls missing; using fallback`);
+                dispose(loaded);
+                loaded = undefined;
+                return;
+            }
+            const rest = new Map<THREE.Bone, THREE.Quaternion>(), fingers: THREE.Bone[] = [], mouths: THREE.Mesh[] = [], eyes: THREE.Mesh[] = [];
+            loaded.traverse(n => { if (n instanceof THREE.Bone) {
+                rest.set(n, n.quaternion.clone());
+                if (n.name.startsWith('finger_R') || n.name.startsWith('thumb_R'))
+                    fingers.push(n);
+            } if (n instanceof THREE.Mesh) {
+                n.castShadow = true;
+                n.frustumCulled = false;
+                if (n.morphTargetDictionary?.OPEN !== undefined)
+                    mouths.push(n);
+                // Both the eye and eyebrow meshes carry a BLINK morph target (the
+                // eyebrow slides down to act as the closing eyelid, same technique
+                // as Zaid's StudioCharacter.tsx) - collect whichever mesh has it.
+                if (n.morphTargetDictionary?.BLINK !== undefined)
+                    eyes.push(n);
+            } });
+            loaded.updateMatrixWorld(true);
+            upper.getWorldPosition(p.shoulder);
+            fore.getWorldPosition(p.elbow);
+            hand.getWorldPosition(p.wrist);
+            const handMeshes: THREE.SkinnedMesh[] = [];
+            loaded.traverse(n => { if (n instanceof THREE.SkinnedMesh && n.name === 'Hand_R')
+                handMeshes.push(n); });
+            const handBind = loaded.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(hand.getWorldQuaternion(new THREE.Quaternion()));
+            const head = loaded.getObjectByName('head'), chest = loaded.getObjectByName('chest');
+            rig.current = { asset: loaded, upper, fore, hand, fingers, rest, mouths, eyes,
+                head: head instanceof THREE.Bone ? head : undefined,
+                chest: chest instanceof THREE.Bone ? chest : undefined,
+                handBind, handMeshes, a: p.shoulder.distanceTo(p.elbow), b: p.elbow.distanceTo(p.wrist) };
+            setAsset(loaded);
+        }, undefined, e => console.error(`Character ${id} GLB failed to load; using fallback.`, e));
+        return () => { cancelled = true; window.removeEventListener('pointerdown', onUnlock); rig.current = null; if (loaded)
+            dispose(loaded); };
+    }, [id, onUnlock, p]);
+    useFrame(() => {
+        const r = rig.current;
+        if (!asset || !r || r.asset !== asset)
+            return;
+        const g = game.current, now = performance.now(), t = (now - g.bites[id]) / 1500, active = g.phase === 'playing' && g.bites[id] > 0 && t >= 0 && t < 1.2;
+        r.rest.forEach((q, b) => b.quaternion.copy(q));
+        // Head + chest movement copied from Zaid's StudioCharacter.tsx: a
+        // constant idle chest breathe and head sway, plus a dip into the reach,
+        // a lift toward the mouth, and a little chew bob, all driven by the
+        // same bite timeline `t`. `reach` is shared by both so chest and head
+        // react to the same "going for it" phase, exactly like Zaid.
+        const ease = (x: number) => THREE.MathUtils.smootherstep(x, 0, 1);
+        const reach = active ? ease(t / .20) * (1 - ease((t - .58) / .30)) : 0;
+        if (r.chest) {
+            p.q.setFromAxisAngle(p.axis.set(1, 0, 0), .04 * reach + .007 * Math.sin(now * (.0015 + id * .0001) + id));
+            r.chest.quaternion.multiply(p.q);
+        }
+        if (r.head) {
+            const lift = active ? ease((t - .58) / .30) * (1 - ease((t - 1.02) / .23)) : 0;
+            const chew = active && t > .88 && t < 1.04 ? Math.sin((t - .88) * 65) : 0;
+            p.q.setFromAxisAngle(p.axis.set(1, 0, 0), .055 + reach * .055 - lift * .04 + chew * .008);
+            r.head.quaternion.multiply(p.q);
+            p.q.setFromAxisAngle(p.axis.set(0, 1, 0), -.035 * reach + .015 * Math.sin(now * .0007 + id * 2));
+            r.head.quaternion.multiply(p.q);
+        }
+        asset.updateMatrixWorld(true);
+        g.botReach ??= [];
+        r.upper.getWorldPosition(p.shoulder);
+        const reachOffset = new THREE.Vector3(0, -.065, .23).multiplyScalar(.98).applyQuaternion(asset.getWorldQuaternion(new THREE.Quaternion()));
+        reachOffset.add(p.shoulder);
+        g.botReach[id - 1] = { x: reachOffset.x, y: reachOffset.y, z: reachOffset.z, radius: r.a + r.b - .025 };
+        p.idle.set(-.28, 1.10, .84);
+        asset.localToWorld(p.idle);
+        p.idle.y = Math.max(p.idle.y, foodSurface(p.idle.x, p.idle.z, g.remaining).height + .12);
+        asset.worldToLocal(p.idle);
+        p.goal.copy(p.idle);
+        let curl = .16, opening = 0;
+        if (active) {
+            p.target.set(...g.biteTargets[id]);
+            asset.worldToLocal(p.target);
+            p.target.y += .06;
+            p.target.z -= .24;
+            if (t < .18) {
+                const f = THREE.MathUtils.smoothstep(t / .18, 0, 1);
+                p.goal.lerpVectors(p.idle, p.target, f);
+                // A quick side-to-side roam while the hand is still in flight, settling as it arrives.
+                p.goal.y += Math.sin(f * Math.PI) * .035;
+            }
+            else if (t < .62) {
+                p.goal.copy(p.target);
+                curl = t < .38 ? .35 : .65;
+            }
+            else if (t < .94) {
+                const f = THREE.MathUtils.smoothstep((t - .62) / .32, 0, 1);
+                p.goal.lerpVectors(p.target, p.mouth, f);
+                curl = .55;
+                opening = f;
+            }
+            else {
+                const f = THREE.MathUtils.smoothstep((t - .94) / .26, 0, 1);
+                p.goal.lerpVectors(p.mouth, p.idle, f);
+                curl = .7 * (1 - f);
+                opening = (1 - f) * (.35 + .25 * Math.sin(t * 65));
+            }
+            if (t >= .94 && lastSound.current !== g.bites[id]) {
+                lastSound.current = g.bites[id];
+                onChew();
+            }
+        }
+        const aim = (bone: THREE.Bone, from: THREE.Vector3, to: THREE.Vector3) => { bone.getWorldQuaternion(p.worldQ); p.axis.set(0, 1, 0).applyQuaternion(p.worldQ); p.direction.subVectors(to, from).normalize(); p.q.setFromUnitVectors(p.axis, p.direction).multiply(p.worldQ); bone.parent!.getWorldQuaternion(p.parentQ); bone.quaternion.copy(p.parentQ.invert().multiply(p.q)); bone.updateWorldMatrix(false, true); };
+        asset.localToWorld(p.goal);
+        if (active) {
+            const flip = THREE.MathUtils.smootherstep(t, .48, .82) * (1 - THREE.MathUtils.smootherstep(t, .95, 1.05));
+            asset.getWorldQuaternion(p.worldQ);
+            p.curlQ.setFromAxisAngle(p.axis.set(1, 0, 0), Math.PI / 2 - flip * .35);
+            const facing = p.worldQ.clone().multiply(p.curlQ);
+            p.curlQ.setFromAxisAngle(p.axis.set(0, 1, 0), flip * Math.PI);
+            facing.multiply(p.curlQ);
+            const mouth = new THREE.Vector3(0, 1.72, .46);
+            asset.localToWorld(mouth);
+            const idle = p.idle.clone(); asset.localToWorld(idle);
+            botBiteWrist(t, new THREE.Vector3(...g.biteTargets[id]), mouth, idle, facing, p.goal);
+        }
+        // Check the deformed fingers, not only the wrist, against the food surface.
+        for (let pass = 0; pass < 3; pass++) {
+            r.upper.getWorldPosition(p.shoulder);
+            p.direction.subVectors(p.goal, p.shoulder);
+            const { a: upperLength, b: foreLength } = extendArmForReach(r.fore, r.hand, r.a, r.b, p.direction.length(), active);
+            const distance = THREE.MathUtils.clamp(p.direction.length(), Math.abs(upperLength - foreLength) + .001, upperLength + foreLength - .001);
+            p.direction.normalize();
+            p.wrist.copy(p.shoulder).addScaledVector(p.direction, distance);
+            // Two-bone IK keeps the elbow connected and limits reach to the arm's length.
+            p.pole.set(-1, -.25, .6).transformDirection(asset.matrixWorld);
+            p.pole.addScaledVector(p.direction, -p.pole.dot(p.direction)).normalize();
+            const along = (upperLength * upperLength - foreLength * foreLength + distance * distance) / (2 * distance), height = Math.sqrt(Math.max(0, upperLength * upperLength - along * along));
+            p.elbow.copy(p.shoulder).addScaledVector(p.direction, along).addScaledVector(p.pole, height);
+            aim(r.upper, p.shoulder, p.elbow);
+            r.fore.getWorldPosition(p.elbow);
+            aim(r.fore, p.elbow, p.wrist);
+            // Orient the palm independently of the elbow: down to scoop, then a quick, distinct
+            // flip to cup upward toward the mouth (a short window, not a slow continuous roll).
+            const flip = active ? THREE.MathUtils.smootherstep(t, .48, .82) * (1 - THREE.MathUtils.smootherstep(t, .95, 1.05)) : 0;
+            asset.getWorldQuaternion(p.worldQ);
+            p.curlQ.setFromAxisAngle(p.axis.set(1, 0, 0), Math.PI / 2 - flip * .35);
+            p.q.copy(p.worldQ).multiply(p.curlQ);
+            p.curlQ.setFromAxisAngle(p.axis.set(0, 1, 0), flip * Math.PI);
+            p.q.multiply(p.curlQ);
+            r.hand.parent!.getWorldQuaternion(p.parentQ);
+            r.hand.quaternion.copy(p.parentQ.invert().multiply(p.q));
+            for (const finger of r.fingers) {
+                p.curlQ.setFromAxisAngle(p.axis.set(1, 0, 0), curl);
+                finger.quaternion.copy(r.rest.get(finger)!).multiply(p.curlQ);
+            }
+            asset.updateMatrixWorld(true);
+            let clearance = 0;
+            for (const original of r.handMeshes) {
+                const mesh = (asset.getObjectByName('PlayerStyleHand_R') as THREE.Mesh | undefined) ?? original;
+                if (mesh instanceof THREE.SkinnedMesh) mesh.skeleton.update();
+                for (let i = 0; i < mesh.geometry.attributes.position.count; i += 24) {
+                    mesh.getVertexPosition(i, p.sample);
+                    mesh.localToWorld(p.sample);
+                    clearance = Math.max(clearance, foodObstacleHeight(p.sample.x, p.sample.z, g.remaining) + .015 - p.sample.y);
+                }
+            }
+            if (clearance < .003)
+                break;
+            p.goal.y += Math.min(clearance, .35);
+        }
+        for (const mesh of r.mouths) {
+            const dict = mesh.morphTargetDictionary!, weights = mesh.morphTargetInfluences!;
+            weights[dict.HALF_OPEN] = opening <= .5 ? opening * 2 : 2 * (1 - opening);
+            weights[dict.OPEN] = Math.max(0, opening * 2 - 1);
+        }
+        // Periodic blink, phase-offset per character so bots don't blink in unison
+        // (same formula as Zaid's StudioCharacter.tsx).
+        const blinkT = (now / 1000 + id * 1.17) % (4.2 + id * .37), blink = blinkT < .16 ? Math.sin(blinkT / .16 * Math.PI) : 0;
+        for (const eye of r.eyes)
+            eye.morphTargetInfluences![eye.morphTargetDictionary!.BLINK] = blink;
+        asset.updateMatrixWorld(true);
+        const leftUpper = asset.getObjectByName('upper_arm_L') as THREE.Bone, leftFore = asset.getObjectByName('forearm_L') as THREE.Bone, leftHand = asset.getObjectByName('hand_L') as THREE.Bone;
+        if (leftUpper && leftFore && leftHand) {
+            leftUpper.getWorldPosition(p.shoulder);
+            p.goal.set(.55, .43, .04);
+            asset.localToWorld(p.goal);
+            p.direction.subVectors(p.goal, p.shoulder);
+            const d = THREE.MathUtils.clamp(p.direction.length(), Math.abs(r.a - r.b) + .001, r.a + r.b - .001);
+            p.direction.normalize();
+            p.wrist.copy(p.shoulder).addScaledVector(p.direction, d);
+            p.pole.set(1, -.4, .1).transformDirection(asset.matrixWorld);
+            p.pole.addScaledVector(p.direction, -p.pole.dot(p.direction)).normalize();
+            const a = (r.a * r.a - r.b * r.b + d * d) / (2 * d);
+            p.elbow.copy(p.shoulder).addScaledVector(p.direction, a).addScaledVector(p.pole, Math.sqrt(Math.max(0, r.a * r.a - a * a)));
+            aim(leftUpper, p.shoulder, p.elbow);
+            leftFore.getWorldPosition(p.elbow);
+            aim(leftFore, p.elbow, p.wrist);
+            leftHand.quaternion.copy(r.rest.get(leftHand)!);
+            asset.updateMatrixWorld(true);
+        }
+        if (food.current) {
+            food.current.visible = active && t >= .58 && t < .94;
+            p.goal.set(0, .23, .07);
+            r.hand.localToWorld(p.goal);
+            food.current.position.copy(p.goal);
+        }
+    }, -.1);
+    if (!asset)
+        return <>{fallback}</>;
+    return <group name={`character-${id}-blender`}><primitive object={asset}/><CharacterHands scene={asset} id={id} game={game}/><group ref={food} visible={false}><mesh scale={[.085, .065, .085]}><icosahedronGeometry args={[1, 2]}/><meshStandardMaterial color="#eac45e" roughness={.9}/></mesh>{Array.from({ length: 20 }, (_, i) => <mesh key={i} position={[Math.sin(i * 2.4) * .075, Math.sin(i * 1.7) * .05, Math.cos(i * 2.4) * .075]} scale={[.016, .012, .023]}><sphereGeometry args={[1, 6, 4]}/><meshStandardMaterial color="#edcb66"/></mesh>)}</group></group>;
+}

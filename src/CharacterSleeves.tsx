@@ -36,13 +36,26 @@ export function CharacterSleeves({ scene }: { scene: THREE.Group }) {
     scene.updateWorldMatrix(true, true);
     for (const arm of arms.current) {
       const hand = arm.wrist.getObjectByName(`PlayerStyleHand_${arm.wrist.name.endsWith('_R') ? 'R' : 'L'}`);
-      const start = new THREE.Vector3();
-      if (hand) start.set(0, 0, .205).applyMatrix4(hand.matrixWorld);
-      else arm.wrist.getWorldPosition(start);
+      const start = new THREE.Vector3(), cuffDirection = new THREE.Vector3();
+      if (hand) {
+        // Place the cuff inside the wrist and align its opening to the wrist,
+        // rather than cutting across the skin when the hand rotates.
+        start.set(0, 0, .19).applyMatrix4(hand.matrixWorld);
+        cuffDirection.set(0, 0, .34).applyMatrix4(hand.matrixWorld);
+      } else {
+        arm.wrist.getWorldPosition(start);
+        arm.elbow.getWorldPosition(cuffDirection);
+      }
       const elbow = arm.elbow.getWorldPosition(new THREE.Vector3()), end = arm.upper.getWorldPosition(new THREE.Vector3());
-      scene.worldToLocal(start); scene.worldToLocal(elbow); scene.worldToLocal(end);
-      end.x *= .84;
-      const curve = new THREE.QuadraticBezierCurve3(start, elbow, end);
+      scene.worldToLocal(start); scene.worldToLocal(cuffDirection); scene.worldToLocal(elbow); scene.worldToLocal(end);
+      const refined = scene.getObjectByName('ZaidRig')?.userData.chibiRefinement === 2;
+      const shoulder = end.clone();
+      end.x *= refined ? .52 : .84;
+      if (refined) end.y -= .055;
+      cuffDirection.sub(start).normalize().multiplyScalar(.14).add(start);
+      const curve = refined
+        ? new THREE.CatmullRomCurve3([start, cuffDirection, elbow, shoulder, end], false, 'centripetal')
+        : new THREE.CubicBezierCurve3(start, cuffDirection, elbow, end);
       const frames = curve.computeFrenetFrames(48, false);
       const geometry = arm.mesh.geometry, position = geometry.attributes.position, rest = geometry.userData.rest as Float32Array;
       const centers = Array.from({ length: 49 }, (_, i) => curve.getPoint(i / 48));
@@ -50,7 +63,8 @@ export function CharacterSleeves({ scene }: { scene: THREE.Group }) {
       for (let i = 0; i < position.count; i++) {
         const t = THREE.MathUtils.clamp(.5 - rest[i * 3 + 1], 0, 1), ring = Math.round(t * 48);
         const center = point.copy(centers[ring]);
-        const radius = THREE.MathUtils.lerp(.092, .185, THREE.MathUtils.smoothstep(t, 0, 1));
+
+        const radius = THREE.MathUtils.lerp(.105, refined ? .145 : .185, THREE.MathUtils.smoothstep(t, 0, .82)) * (refined ? THREE.MathUtils.lerp(1,.28,THREE.MathUtils.smoothstep(t,.90,1)) : 1);
         center.addScaledVector(frames.normals[ring], rest[i * 3] * radius);
         center.addScaledVector(frames.binormals[ring], rest[i * 3 + 2] * radius);
         position.setXYZ(i, center.x, center.y, center.z);
@@ -60,3 +74,4 @@ export function CharacterSleeves({ scene }: { scene: THREE.Group }) {
   });
   return null;
 }
+
