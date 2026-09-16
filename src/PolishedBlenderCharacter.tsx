@@ -1,3 +1,6 @@
+import { refineCharacterFace } from './characterFaces';
+import { refineCharacterNose } from './characterNoses';
+import { refineCharacterEye } from './characterEyes';
 import { extendArmForReach } from './characterArmProportions';
 import { botBiteWrist } from './botBiteMotion';
 import { CharacterHands } from './CharacterHands';
@@ -69,6 +72,9 @@ export function PolishedBlenderCharacter({ id, game, fallback, onChew, onUnlock 
                     fingers.push(n);
             } if (n instanceof THREE.Mesh) {
                 n.castShadow = true;
+            refineCharacterFace(n, id);
+            if (/^Eye(?:\.?\d+)?$/.test(n.name)) refineCharacterEye(n);
+            if (/Small.?rounded.?nose/i.test(n.name)) refineCharacterNose(n, id);
                 n.frustumCulled = false;
                 if (n.morphTargetDictionary?.OPEN !== undefined)
                     mouths.push(n);

@@ -1,3 +1,6 @@
+import { refineCharacterFace } from './characterFaces';
+import { refineCharacterNose } from './characterNoses';
+import { refineCharacterEye } from './characterEyes';
 import { extendArmForReach } from './characterArmProportions';
 import { botBiteWrist } from './botBiteMotion';
 import { CharacterHands } from './CharacterHands';
@@ -61,7 +64,10 @@ export function PolishedStudioCharacter({ id, game, fallback, onChew, onUnlock }
         loaded.traverse(n => {
           if (n instanceof THREE.Bone) { rest.set(n, n.quaternion.clone()); if (/^(finger_R|thumb_R)/.test(n.name)) fingers.push(n); }
           if (n instanceof THREE.Mesh) {
-            n.castShadow = true; n.receiveShadow = true; n.frustumCulled = false;
+            n.castShadow = true;
+            refineCharacterFace(n, id);
+            if (/^Eye(?:\.?\d+)?$/.test(n.name)) refineCharacterEye(n);
+            if (/Small.?rounded.?nose/i.test(n.name)) refineCharacterNose(n, id); n.receiveShadow = true; n.frustumCulled = false;
             if (n.morphTargetDictionary?.OPEN !== undefined) mouths.push(n);
             if (n.morphTargetDictionary?.BLINK !== undefined) eyes.push(n);
             if (n instanceof THREE.SkinnedMesh && n.name === 'Hand_R') skin.push(n);
