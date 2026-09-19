@@ -66,7 +66,8 @@ export function CharacterSleeves({ scene }: { scene: THREE.Group }) {
         const t = THREE.MathUtils.clamp(.5 - rest[i * 3 + 1], 0, 1), ring = Math.round(t * 48);
         const center = point.copy(centers[ring]);
 
-        const radius = THREE.MathUtils.lerp(.105, refined ? .145 : .185, THREE.MathUtils.smoothstep(t, 0, .82)) * (refined ? THREE.MathUtils.lerp(1,.28,THREE.MathUtils.smoothstep(t,.90,1)) : 1);
+        const fullness = scene.userData.fullerChibi ? 1 + .22 * THREE.MathUtils.smoothstep(t, .12, .72) : 1;
+        const radius = THREE.MathUtils.lerp(.105, refined ? .145 : .185, THREE.MathUtils.smoothstep(t, 0, .82)) * (refined ? THREE.MathUtils.lerp(1,.28,THREE.MathUtils.smoothstep(t,.90,1)) : 1) * fullness;
         center.addScaledVector(frames.normals[ring], rest[i * 3] * radius);
         center.addScaledVector(frames.binormals[ring], rest[i * 3 + 2] * radius);
         position.setXYZ(i, center.x, center.y, center.z);

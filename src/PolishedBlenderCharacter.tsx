@@ -1,4 +1,5 @@
 import { refineCharacterFace } from './characterFaces';
+import { refineCharacterBody } from './characterBody';
 import { refineSamiHair } from './characterHair';
 import { refineCharacterNose } from './characterNoses';
 import { refineCharacterEye } from './characterEyes';
@@ -66,6 +67,7 @@ export function PolishedBlenderCharacter({ id, game, fallback, onChew, onUnlock 
             loaded.rotation.set(.16, id === 1 ? .85 : id === 3 ? -.85 : 0, 0, 'YXZ');
             if (refinedLook) loaded.rotation.z = [0, .012, -.010, .016][id];
             loaded.scale.setScalar(.98);
+            loaded.userData.fullerChibi = refinedLook;
             const upper = loaded.getObjectByName('upper_arm_R'), fore = loaded.getObjectByName('forearm_R'), hand = loaded.getObjectByName('hand_R');
             if (!(upper instanceof THREE.Bone) || !(fore instanceof THREE.Bone) || !(hand instanceof THREE.Bone)) {
                 console.error(`Character ${id} rig controls missing; using fallback`);
@@ -90,6 +92,7 @@ export function PolishedBlenderCharacter({ id, game, fallback, onChew, onUnlock 
                 if (n.morphTargetDictionary?.BLINK !== undefined)
                     eyes.push(n);
                 refineCharacterFace(n,id);
+                if (refinedLook) refineCharacterBody(n);
                 if (id === 3) refineSamiHair(n);
             const part={mesh:n,position:n.position.clone(),scale:n.scale.clone(),side:0};n.geometry.computeBoundingBox();part.side=Math.sign(((n.geometry.boundingBox?.min.x??0)+(n.geometry.boundingBox?.max.x??0))*.5);
                 if(/^Eye(?:\.?\d+)?$/.test(n.name)){eyeParts.push(part);refineCharacterEye(n);}if(/Small.?rounded.?nose/i.test(n.name))refineCharacterNose(n,id);if(/^Eyebrow(?:\.\d+)?$/.test(n.name))brows.push(part);if(n.name==='Rounded head')face=part;

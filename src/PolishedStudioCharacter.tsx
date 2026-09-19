@@ -1,4 +1,5 @@
 import { refineCharacterFace } from './characterFaces';
+import { refineCharacterBody } from './characterBody';
 import { refineCharacterNose } from './characterNoses';
 import { refineCharacterEye } from './characterEyes';
 import { extendArmForReach } from './characterArmProportions';
@@ -60,6 +61,7 @@ export function PolishedStudioCharacter({ id, game, fallback, onChew, onUnlock }
       const seat = botSeats[id - 1], yaw = id === 1 ? .85 : id === 3 ? -.85 : 0;
       loaded.position.set(seat[0], refinedLook ? -.28 : -.40, seat[1]);
       loaded.rotation.set(.16, yaw, 0, 'YXZ'); loaded.scale.setScalar(.98);
+      loaded.userData.fullerChibi = refinedLook;
       if (refinedLook) loaded.rotation.z = [0,.012,-.010,.016][id];
       loaded.updateMatrixWorld(true);
       const bone = (name: string) => { const b = loaded!.getObjectByName(name); if (!(b instanceof THREE.Bone)) throw new Error(`Missing ${name}`); return b; };
@@ -74,6 +76,7 @@ export function PolishedStudioCharacter({ id, game, fallback, onChew, onUnlock }
             if (n.morphTargetDictionary?.BLINK !== undefined) eyes.push(n);
             if (n instanceof THREE.SkinnedMesh && n.name === 'Hand_R') skin.push(n);
             refineCharacterFace(n,id);
+            if (refinedLook) refineCharacterBody(n);
             const part={mesh:n,position:n.position.clone(),scale:n.scale.clone(),side:0};n.geometry.computeBoundingBox();part.side=Math.sign(((n.geometry.boundingBox?.min.x??0)+(n.geometry.boundingBox?.max.x??0))*.5);
             if(/^Eye(?:\.?\d+)?$/.test(n.name)){eyeParts.push(part);refineCharacterEye(n);}if(/Small.?rounded.?nose/i.test(n.name))refineCharacterNose(n,id);if(/^Eyebrow(?:\.\d+)?$/.test(n.name))brows.push(part);if(n.name==='Rounded head')face=part;
             if (refinedLook && /Keffiyeh/i.test(n.name) && n.material instanceof THREE.MeshStandardMaterial) {
