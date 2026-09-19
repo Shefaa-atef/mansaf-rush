@@ -395,8 +395,9 @@ function App() {
 
       {view.phase === 'ready' && (
         <section className="lobby-screen" aria-label={lang === 'ar' ? 'منسف رش' : 'Mansaf Rush'}>
+          <div className="lobby-backdrop" style={{ backgroundImage: `url(${scoopStepImg})` }} aria-hidden="true" />
           <header className="lobby-toolbar">
-            <span className="edition-stamp">{t.intro.eyebrow}</span>
+            <span className="edition-stamp"><span aria-hidden="true">✦</span> {lang === 'ar' ? 'العزومة بلّشت!' : 'DINNER IS ON!'}</span>
             <div className="lobby-settings">
               <button className="lobby-sound" aria-pressed={!soundMuted} onClick={() => { sfx.setMuted(!soundMuted); setSoundMuted(!soundMuted); }}>{soundMuted ? (lang === 'ar' ? 'الصوت: مكتوم' : 'Sound: off') : (lang === 'ar' ? 'الصوت: مفعل' : 'Sound: on')}</button>
               <button className="language-switch" onClick={toggleLang}>{t.header.langBtn}</button>
@@ -405,25 +406,33 @@ function App() {
           <div className="lobby-main">
             <div className="lobby-intro">
               <h1 className="lobby-logo"><img src={logoImg} alt={t.header.logoAlt} /></h1>
-              <div>
-                <p className="lobby-invitation" lang="ar" dir="rtl">طابخين لك منسف!</p>
-                <p className="lobby-tagline">{lang === 'ar' ? 'جمّع، دحبر، القم… ونافس الشباب على السدر!' : 'Scoop, roll, eat… beat the boys to the last bite!'}</p>
+              <p className="lobby-invitation" lang="ar" dir="rtl">طابخين لك منسف!</p>
+              <p className="lobby-tagline">{lang === 'ar' ? 'سدر واحد، أربع شهيات. بتقدر تسبق الشباب؟' : 'One platter. Four appetites. Can you beat the boys?'}</p>
+              <div className="lobby-start">
+                <button className="primary-btn lobby-enter" onClick={start}><span className="lobby-play-icon" aria-hidden="true">▶</span>{lang === 'ar' ? 'يلا ناكل!' : 'LET’S EAT!'}</button>
+                <span className="lobby-control-note">{lang === 'ar' ? 'العب بلوحة المفاتيح' : 'KEYBOARD REQUIRED'}</span>
+              </div>
+              <div className="lobby-rivals">
+                <span>{lang === 'ar' ? 'الشباب جاهزين' : 'THE BOYS ARE READY'}</span>
+                <div>{[zaidImg, omarImg, samiImg].map((photo, index) => <figure key={photo}><img src={photo} alt="" /><figcaption>{names[index + 1]}</figcaption></figure>)}</div>
               </div>
             </div>
-            <ol className="lobby-steps" aria-label={t.intro.title}>
-              {t.intro.steps.map((step, index) => (
-                <li className="lobby-step" key={step.label}>
-                  <img className="lobby-step-photo" src={STEP_PHOTOS[index]} alt={step.label} width="1254" height="1254" />
-                  <div className="lobby-step-copy">
-                    <h2><span className="lobby-step-number" aria-hidden="true">{index + 1}</span>{step.title}</h2>
-                    <p>{step.desc}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-            <div className="lobby-start">
-              <button className="primary-btn lobby-enter" onClick={start}>{t.intro.letsEat}</button>
-              <span className="lobby-control-note">{lang === 'ar' ? 'العب بلوحة المفاتيح · الأسهم + المسافة' : 'PLAY WITH YOUR KEYBOARD · ARROW KEYS + SPACE'}</span>
+            <div className="lobby-guide">
+              <div className="lobby-guide-heading"><span aria-hidden="true">✦</span><h2>{lang === 'ar' ? 'أصول اللقمة' : 'MAKE EVERY BITE COUNT'}</h2><span aria-hidden="true">✦</span></div>
+              <p className="lobby-guide-subtitle">{lang === 'ar' ? 'ثلاث حركات… وبتصير معلّم منسف.' : 'Three moves. One perfect lokma.'}</p>
+              <ol className="lobby-steps" aria-label={t.intro.title}>
+                {t.intro.steps.map((step, index) => (
+                  <li className="lobby-step" key={step.label}>
+                    <span className="lobby-step-number" aria-hidden="true">{index + 1}</span>
+                    <img className="lobby-step-photo" src={STEP_PHOTOS[index]} alt={step.label} width="1254" height="1254" />
+                    <div className="lobby-step-copy">
+                      <h3>{step.title}</h3>
+                      <p>{step.desc}</p>
+                      <div className="lobby-step-keys" dir="ltr" aria-hidden="true">{[['↑ ↓ ← →', 'SPACE'], ['SPACE', '← →'], ['↑']][index].map(key => <kbd key={key}>{key}</kbd>)}</div>
+                    </div>
+                  </li>
+                ))}
+              </ol>
             </div>
           </div>
           <footer className="lobby-footer"><span>{lang === 'ar' ? 'سدر واحد. أربع شهيات.' : 'ONE PLATTER. FOUR APPETITES.'}</span><span>MANSAF RUSH</span></footer>
