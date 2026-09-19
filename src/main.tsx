@@ -21,12 +21,16 @@ import meImg from './assets/me.png';
 import zaidImg from './assets/zaid.png';
 import omarImg from './assets/omar.png';
 import samiImg from './assets/sami.png';
+import scoopStepImg from './assets/steps/جمع.png';
+import rollStepImg from './assets/steps/دحبر.png';
+import eatStepImg from './assets/steps/القم.png';
 import './style.css';
 import './photo.css';
 import './arcade.css';
 
 const COLORS = ['#e5b75d', '#e67a65', '#7bb6bb', '#a4b57d'];
 const CHARACTER_PHOTOS = [meImg, zaidImg, omarImg, samiImg];
+const STEP_PHOTOS = [scoopStepImg, rollStepImg, eatStepImg];
 const refinedLook = new URLSearchParams(window.location.search).get('look') !== 'before';
 
 const CONFETTI_COLORS = ['#f5d676', '#e67a65', '#7bb6bb', '#a4b57d', '#ffffff'];
@@ -130,8 +134,6 @@ function App() {
     [view, setView] = useState({ ...game.current }),
     [menuOpen, setMenuOpen] = useState(false),
     [helpOpen, setHelpOpen] = useState(false),
-    [lobbyPage, setLobbyPage] = useState<'welcome' | 'steps'>('welcome'),
-    [selectedStep, setSelectedStep] = useState(0),
     [soundMuted, setSoundMuted] = useState(false),
     [lang, setLang] = useState<Lang>(() => (localStorage.getItem('mansaf_lang') as Lang) || 'en');
 
@@ -392,7 +394,7 @@ function App() {
       )}
 
       {view.phase === 'ready' && (
-        <section className={`lobby-screen lobby-${lobbyPage}`} aria-label={lang === 'ar' ? 'منسف رش' : 'Mansaf Rush'}>
+        <section className="lobby-screen" aria-label={lang === 'ar' ? 'منسف رش' : 'Mansaf Rush'}>
           <header className="lobby-toolbar">
             <span className="edition-stamp">{t.intro.eyebrow}</span>
             <div className="lobby-settings">
@@ -400,49 +402,30 @@ function App() {
               <button className="language-switch" onClick={toggleLang}>{t.header.langBtn}</button>
             </div>
           </header>
-          {lobbyPage === 'welcome' ? (
-            <div className="lobby-welcome-content">
+          <div className="lobby-main">
+            <div className="lobby-intro">
               <h1 className="lobby-logo"><img src={logoImg} alt={t.header.logoAlt} /></h1>
-              <p className="lobby-invitation" lang="ar" dir="rtl">طابخين لك منسف!</p>
-              <p className="lobby-tagline">{lang === 'ar' ? 'الشباب جاهزين… ناقصنا إنت.' : 'The boys are ready. Your seat is waiting.'}</p>
-              <button className="primary-btn lobby-enter" onClick={() => { sfx.playPreGameGreeting(); setLobbyPage('steps'); }}>{lang === 'ar' ? 'خذ مكانك' : 'TAKE YOUR SEAT'} <span aria-hidden="true">➜</span></button>
-              <span className="lobby-control-note">{lang === 'ar' ? 'لعبة بلوحة المفاتيح · أربع خطوات وتكون جاهز' : 'KEYBOARD GAME · FOUR QUICK STEPS TO GET READY'}</span>
+              <div>
+                <p className="lobby-invitation" lang="ar" dir="rtl">طابخين لك منسف!</p>
+                <p className="lobby-tagline">{lang === 'ar' ? 'جمّع، دحبر، القم… ونافس الشباب على السدر!' : 'Scoop, roll, eat… beat the boys to the last bite!'}</p>
+              </div>
             </div>
-          ) : (
-            <div className="lobby-lesson">
-              <div className="lesson-heading">
-                <button className="lobby-back" onClick={() => setLobbyPage('welcome')}>{lang === 'ar' ? '→ الرئيسية' : '← Main menu'}</button>
-                <img src={logoImg} alt={t.header.logoAlt} />
-                <button className="lobby-back" onClick={() => sfx.playPreGameGreeting()}>{lang === 'ar' ? '♫ اسمع العزومة' : '♫ Hear the invite'}</button>
-              </div>
-              <div className="lesson-title"><span className="eyebrow">{lang === 'ar' ? 'قبل ما نبلّش' : 'BEFORE WE DIG IN'}</span><h1>{lang === 'ar' ? 'أصول اللقمة.' : 'Master the lokma.'}</h1></div>
-              <div className="lesson-tabs" role="tablist" aria-label={t.guide.title}>
-                {t.intro.steps.map((step, index) => <button key={index} id={`lesson-tab-${index}`} role="tab" aria-selected={selectedStep === index} aria-controls="lesson-panel" tabIndex={selectedStep === index ? 0 : -1} onKeyDown={event => {
-                  if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
-                  event.preventDefault();
-                  const direction = lang === 'ar' ? -1 : 1;
-                  const next = event.key === 'Home' ? 0 : event.key === 'End' ? 3 : (selectedStep + (event.key === 'ArrowRight' ? direction : -direction) + 4) % 4;
-                  setSelectedStep(next); document.getElementById(`lesson-tab-${next}`)?.focus();
-                }} onClick={() => { sfx.playClick(); setSelectedStep(index); }}><span>{index + 1}</span><b>{step.title.split(' · ')[1] ?? step.title}</b></button>)}
-              </div>
-              <div className="lesson-panel" id="lesson-panel" role="tabpanel" aria-labelledby={`lesson-tab-${selectedStep}`}>
-                <div className={`lesson-image-slot lesson-image-${selectedStep}`} aria-label={t.intro.steps[selectedStep].label}>
-                  <div className="lesson-key-art" dir="ltr">{[['←', '↑', '↓', '→'], ['SPACE'], ['SPACE', '←', '→'], ['↑']][selectedStep].map((key, index) => <kbd key={index}>{key}</kbd>)}</div>
-                  {selectedStep === 1 && <div className="lesson-demo-meter"><span /></div>}
-                  {selectedStep === 2 && <div className="lesson-rice-ball" aria-hidden="true">●</div>}
-                  {selectedStep === 3 && <div className="lesson-score-art" aria-hidden="true">+10</div>}
-                  <span className="lesson-art-label">{['MOVE', 'SCOOP', 'ROLL', 'EAT'][selectedStep]}</span>
-                </div>
-                <div className="lesson-copy"><span className="eyebrow">{t.intro.stepPill(selectedStep + 1, 4)}</span><h2>{t.intro.steps[selectedStep].title.split(' · ')[1] ?? t.intro.steps[selectedStep].title}</h2><p>{t.intro.steps[selectedStep].desc}</p>
-                  <div className="lesson-navigation">
-                    {selectedStep > 0 && <button className="secondary-btn" onClick={() => setSelectedStep(selectedStep - 1)}>{t.intro.back}</button>}
-                    <button className="primary-btn" onClick={() => { sfx.playConfirm(); if (selectedStep < 3) setSelectedStep(selectedStep + 1); else start(); }}>{selectedStep < 3 ? t.intro.next : t.intro.letsEat}</button>
+            <ol className="lobby-steps" aria-label={t.intro.title}>
+              {t.intro.steps.map((step, index) => (
+                <li className="lobby-step" key={step.label}>
+                  <img className="lobby-step-photo" src={STEP_PHOTOS[index]} alt={step.label} width="1254" height="1254" />
+                  <div className="lobby-step-copy">
+                    <h2><span className="lobby-step-number" aria-hidden="true">{index + 1}</span>{step.title}</h2>
+                    <p>{step.desc}</p>
                   </div>
-                </div>
-              </div>
-              <button className="lesson-skip" onClick={start}>{lang === 'ar' ? 'بعرف ألعب — يلا ناكل!' : 'Already know how? Let’s eat!'} <span aria-hidden="true">↗</span></button>
+                </li>
+              ))}
+            </ol>
+            <div className="lobby-start">
+              <button className="primary-btn lobby-enter" onClick={start}>{t.intro.letsEat}</button>
+              <span className="lobby-control-note">{lang === 'ar' ? 'العب بلوحة المفاتيح · الأسهم + المسافة' : 'PLAY WITH YOUR KEYBOARD · ARROW KEYS + SPACE'}</span>
             </div>
-          )}
+          </div>
           <footer className="lobby-footer"><span>{lang === 'ar' ? 'سدر واحد. أربع شهيات.' : 'ONE PLATTER. FOUR APPETITES.'}</span><span>MANSAF RUSH</span></footer>
         </section>
       )}
