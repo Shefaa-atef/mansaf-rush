@@ -127,8 +127,8 @@ export function StudioCharacter({ id, game, fallback, onChew, onUnlock }: {
     // The replacement hand uses +Z for the palm and +Y for the fingers.
     // Turn about the forearm to cup upward, then tilt the palm toward the mouth.
     const flip = active ? THREE.MathUtils.smootherstep(t, .48, .82) * (1 - THREE.MathUtils.smootherstep(t, .95, 1.05)) : 0;
-    orient(Math.PI / 2 - flip * .60, flip * Math.PI + rolling * .08, p.handQ);
-    orient(Math.PI / 2 - .60, Math.PI, p.eatQ);
+    orient(Math.PI / 2 - flip * .35, flip * Math.PI + rolling * .08, p.handQ);
+    orient(Math.PI / 2 - .35, Math.PI, p.eatQ);
     p.mouth.copy(r.mouthSocket); r.head.localToWorld(p.mouth);
     p.point.copy(p.foodOffset).multiplyScalar(.98).applyQuaternion(p.eatQ); p.mouth.sub(p.point);
     p.ready.set(-.22, 1.10, .83); scene.localToWorld(p.ready);

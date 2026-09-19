@@ -170,7 +170,7 @@ export function BlenderCharacter({ id, game, fallback, onChew, onUnlock }: {
         if (active) {
             const flip = THREE.MathUtils.smootherstep(t, .48, .82) * (1 - THREE.MathUtils.smootherstep(t, .95, 1.05));
             asset.getWorldQuaternion(p.worldQ);
-            p.curlQ.setFromAxisAngle(p.axis.set(1, 0, 0), Math.PI / 2 - flip * .60);
+            p.curlQ.setFromAxisAngle(p.axis.set(1, 0, 0), Math.PI / 2 - flip * .35);
             const facing = p.worldQ.clone().multiply(p.curlQ);
             p.curlQ.setFromAxisAngle(p.axis.set(0, 1, 0), flip * Math.PI);
             facing.multiply(p.curlQ);
@@ -199,7 +199,7 @@ export function BlenderCharacter({ id, game, fallback, onChew, onUnlock }: {
             // flip to cup upward toward the mouth (a short window, not a slow continuous roll).
             const flip = active ? THREE.MathUtils.smootherstep(t, .48, .82) * (1 - THREE.MathUtils.smootherstep(t, .95, 1.05)) : 0;
             asset.getWorldQuaternion(p.worldQ);
-            p.curlQ.setFromAxisAngle(p.axis.set(1, 0, 0), Math.PI / 2 - flip * .60);
+            p.curlQ.setFromAxisAngle(p.axis.set(1, 0, 0), Math.PI / 2 - flip * .35);
             p.q.copy(p.worldQ).multiply(p.curlQ);
             p.curlQ.setFromAxisAngle(p.axis.set(0, 1, 0), flip * Math.PI);
             p.q.multiply(p.curlQ);

@@ -9,6 +9,8 @@ let muted = false;
 
 export function setMuted(value: boolean) {
   muted = value;
+  activeVoices.forEach((el) => (el.volume = value ? 0 : VOICE_VOLUME));
+  applyAmbientVolume();
 }
 
 export function isMuted() {
@@ -35,6 +37,29 @@ if (typeof window !== 'undefined') {
   };
   window.addEventListener('pointerdown', unlockOnce);
   window.addEventListener('keydown', unlockOnce);
+}
+
+/** A short, textured noise burst (band-passed) for crunch/bite impacts. */
+function noiseBurst(start: number, duration: number, gain: number, freq: number) {
+  if (!ctx) return;
+  const length = Math.max(1, Math.floor(ctx.sampleRate * duration));
+  const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / length);
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.setValueAtTime(freq, start);
+  filter.Q.value = 0.8;
+  const v = ctx.createGain();
+  v.gain.setValueAtTime(gain, start);
+  v.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  src.connect(filter);
+  filter.connect(v);
+  v.connect(ctx.destination);
+  src.start(start);
+  src.stop(start + duration + 0.01);
 }
 
 function tone(
@@ -82,6 +107,53 @@ export function playClose() {
   tone(420, ctx.currentTime, 0.08, 0.04, 'triangle', 260);
 }
 
+/** Upward blip for opening a panel — the open-side counterpart to playClose(). */
+export function playOpen() {
+  unlockAudio();
+  if (muted || !ctx) return;
+  tone(420, ctx.currentTime, 0.07, 0.04, 'triangle', 640);
+}
+
+/** Two-note toggle switch: rises for "on", falls for "off". */
+export function playToggle(on: boolean) {
+  unlockAudio();
+  if (muted || !ctx) return;
+  const t = ctx.currentTime;
+  if (on) {
+    tone(520, t, 0.05, 0.045, 'triangle');
+    tone(780, t + 0.05, 0.08, 0.05, 'triangle');
+  } else {
+    tone(780, t, 0.05, 0.04, 'triangle');
+    tone(480, t + 0.05, 0.08, 0.035, 'triangle');
+  }
+}
+
+/** Reset whoosh for restarting/replaying a round. */
+export function playRestart() {
+  unlockAudio();
+  if (muted || !ctx) return;
+  const t = ctx.currentTime;
+  tone(320, t, 0.09, 0.05, 'sawtooth', 720);
+  tone(720, t + 0.08, 0.1, 0.045, 'triangle', 520);
+}
+
+/** Bite/chomp sound for the moment a lokma reaches a mouth — player or bot. */
+export function playEat(variant: 'player' | 'bot' = 'player') {
+  unlockAudio();
+  if (muted || !ctx) return;
+  const t = ctx.currentTime;
+  if (variant === 'player') {
+    noiseBurst(t, 0.05, 0.05, 2200);
+    tone(210, t, 0.09, 0.07, 'triangle', 100);
+    tone(175, t + 0.08, 0.08, 0.05, 'triangle', 90);
+  } else {
+    // A touch softer and lower than the player's bite, as if farther from camera.
+    noiseBurst(t, 0.045, 0.03, 1600);
+    tone(150, t, 0.12, 0.05, 'triangle', 70);
+  }
+  playEatBiteSample(variant);
+}
+
 /** Triumphant rising fanfare for a player win. */
 export function playWin() {
   unlockAudio();
@@ -99,4 +171,184 @@ export function playLose() {
   const t = ctx.currentTime,
     notes = [392, 349.23, 293.66, 261.63]; // G4 F4 D4 C4
   notes.forEach((f, i) => tone(f, t + i * 0.15, 0.24, 0.055, 'sawtooth', f * 0.9));
+}
+
+// ---------------------------------------------------------------------------
+// Recorded voice lines + quiet restaurant ambience.
+//
+// These are real actor lines (not synthesized) layered on top of the
+// oscillator sfx above: a pre-round greeting, every character's "bismillah"
+// as the round kicks off, an in-game gathering tip, and a loss taunt. All of
+// it respects the same mute flag as the rest of this module.
+// ---------------------------------------------------------------------------
+import ambientUrl from './assets/sounds/ambient-restaurant.mp3';
+import eatBiteUrl from './assets/sounds/eat-bite.mp3';
+import omarBismillahUrl from './assets/sounds/omar-bismillah.mp3';
+import omarLoseTauntUrl from './assets/sounds/omar-lose-taunt.mp3';
+import zaidBismillahUrl from './assets/sounds/zaid-bismillah.mp3';
+import zaidGatherTipUrl from './assets/sounds/zaid-gather-tip.mp3';
+
+import zaidLoseShawarmaUrl from './assets/sounds/zaid-lose-shawarma.mp3';
+import samiBismillahUrl from './assets/sounds/sami-bismillah.mp3';
+import samiCookingMansafUrl from './assets/sounds/sami-cooking-mansaf.mp3';
+import samiGatherTipUrl from './assets/sounds/sami-gather-tip.mp3';
+import samiLoseTauntUrl from './assets/sounds/sami-lose-taunt.mp3';
+
+const VOICE_VOLUME = 0.9;
+// Deliberately subtle — this is background restaurant hum, not a soundtrack.
+const AMBIENT_VOLUME = 0.07;
+// The recorded bite/chew texture layered under every playEat() — kept low
+// overall since it fires on nearly every bite, and quieter still for bots
+// ("other users") than for the player's own bite, which sits a little
+// higher but is still far from loud.
+const EAT_BITE_VOLUME = { player: 0.16, bot: 0.08 };
+
+/** Plays the real recorded bite sample on top of the synthesized crunch in
+ *  playEat(). Independent of the voice-line ducking system — this is a
+ *  short, frequent one-shot, not dialogue. */
+function playEatBiteSample(variant: 'player' | 'bot') {
+  if (muted) return;
+  try {
+    const el = new Audio(eatBiteUrl);
+    el.volume = EAT_BITE_VOLUME[variant];
+    void el.play().catch(() => {
+      /* Autoplay/decoding hiccup — the synthesized crunch still covers it. */
+    });
+  } catch {
+    /* Audio is optional. */
+  }
+}
+
+// Voice lines that are currently playing. A plain single line is just a set
+// of one, but the round-opening "bismillah" chorus needs several clips
+// running concurrently, so ducking is driven off how many are active rather
+// than a single slot.
+let activeVoices = new Set<HTMLAudioElement>();
+let ambientEl: HTMLAudioElement | undefined;
+let ambientLevel = 0; // 0..1 fade progress, independent of ducking/mute
+let ambientDucked = false;
+let ambientFadeTimer: ReturnType<typeof setInterval> | undefined;
+
+function pick<T>(items: T[]): T {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+function applyAmbientVolume() {
+  if (!ambientEl) return;
+  const duckMul = ambientDucked ? 0.35 : 1;
+  ambientEl.volume = muted ? 0 : ambientLevel * duckMul * AMBIENT_VOLUME;
+}
+
+function refreshDucking() {
+  ambientDucked = activeVoices.size > 0;
+  applyAmbientVolume();
+}
+
+function stopAllVoices() {
+  activeVoices.forEach((el) => el.pause());
+  activeVoices.clear();
+  refreshDucking();
+}
+
+/** Starts one clip, tracking it in `activeVoices` for ducking/ended cleanup. */
+function trackVoice(el: HTMLAudioElement) {
+  activeVoices.add(el);
+  refreshDucking();
+  const done = () => {
+    activeVoices.delete(el);
+    refreshDucking();
+  };
+  el.addEventListener('ended', done);
+  el.addEventListener('error', done);
+  void el.play().catch(done);
+}
+
+/** Plays one recorded voice line, cutting off whichever one(s) are already playing. */
+function playVoice(url: string) {
+  if (muted) return;
+  try {
+    stopAllVoices();
+    const el = new Audio(url);
+    el.volume = VOICE_VOLUME;
+    trackVoice(el);
+  } catch {
+    /* Audio is optional. */
+  }
+}
+
+/** Plays every clip at once, kicked off in the same tick so they stay in
+ *  sync — a chorus rather than one after another. */
+function playVoicesTogether(urls: string[]) {
+  if (muted || urls.length === 0) return;
+  stopAllVoices();
+  for (const url of urls) {
+    try {
+      const el = new Audio(url);
+      el.volume = VOICE_VOLUME;
+      trackVoice(el);
+    } catch {
+      /* Audio is optional. */
+    }
+  }
+}
+
+/** Sami welcomes the player with the mansaf cooking line on entering the guide. */
+export function playPreGameGreeting() {
+  playVoice(samiCookingMansafUrl);
+}
+
+/** Every character says "bismillah" together, in sync, as the round starts. */
+export function playBismillah() {
+  playVoicesTogether([zaidBismillahUrl, omarBismillahUrl, samiBismillahUrl]);
+}
+
+/** "Gather it, roll it, take a bite" — an in-game tip, played once the first
+ *  time the player actually starts gathering rice during real play. */
+export function playGatherTip() {
+  playVoice(pick([zaidGatherTipUrl, samiGatherTipUrl]));
+}
+
+/** A taunt from whoever's needling you after a loss. */
+export function playLoseVoice() {
+  playVoice(pick([omarLoseTauntUrl, samiLoseTauntUrl, zaidLoseShawarmaUrl]));
+}
+
+function fadeAmbientLevelTo(target: number, ms: number, onDone?: () => void) {
+  if (ambientFadeTimer) clearInterval(ambientFadeTimer);
+  const steps = 24,
+    stepMs = ms / steps,
+    start = ambientLevel,
+    diff = target - start;
+  let i = 0;
+  ambientFadeTimer = setInterval(() => {
+    i++;
+    ambientLevel = Math.max(0, Math.min(1, start + diff * (i / steps)));
+    applyAmbientVolume();
+    if (i >= steps) {
+      clearInterval(ambientFadeTimer);
+      ambientFadeTimer = undefined;
+      onDone?.();
+    }
+  }, stepMs);
+}
+
+/** Starts (or resumes) the very quiet restaurant ambience loop. Idempotent —
+ *  safe to call on every round start. */
+export function startAmbient() {
+  if (muted) return;
+  if (!ambientEl) {
+    ambientEl = new Audio(ambientUrl);
+    ambientEl.loop = true;
+  }
+  applyAmbientVolume();
+  void ambientEl.play().catch(() => {
+    /* Blocked until a user gesture arrives; harmless to skip. */
+  });
+  fadeAmbientLevelTo(1, 1500);
+}
+
+/** Fades the ambience out and pauses it. */
+export function stopAmbient() {
+  if (!ambientEl) return;
+  fadeAmbientLevelTo(0, 900, () => ambientEl?.pause());
 }

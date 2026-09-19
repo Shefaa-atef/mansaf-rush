@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Face and mouth — all angles</title>
+<style>*{box-sizing:border-box}body{margin:0;background:#19251f;color:#f4ead8;font:14px Arial,sans-serif}header{padding:14px 20px}h1{font-size:21px;margin:0 0 6px}p{margin:0;color:#c9c5b9}nav{display:flex;gap:8px;margin-top:10px}button{background:#303e33;border:1px solid #7e8565;color:#f4ead8;border-radius:6px;padding:6px 14px;cursor:pointer}button[aria-pressed=true]{background:#b8955d;color:#17231c}.grid{display:grid;grid-template-columns:60px 1fr 1fr;gap:8px;padding:0 16px 12px}.label{font-size:11px;letter-spacing:1px;padding:4px;color:#e7c48a}.angle{align-self:center;font-size:11px;color:#c9c5b9}iframe{width:100%;height:calc((100vh - 184px)/3);min-height:100px;border:0;border-radius:10px}</style>
+<header><h1>Saved face and smile</h1><p>Restored the previous face and smile you preferred.</p><nav><button data-id="1">Zaid</button><button data-id="2" aria-pressed="true">Omar</button><button data-id="3">Sami</button></nav></header>
+<div class="grid"><div></div><div class="label">ORIGINAL</div><div class="label">KEPT VERSION</div></div>
+<script type="module">
+const grid=document.querySelector('.grid');
+for(const [label,angle] of [['Front',0],['¾ view',.65],['Side',1.35]]){
+ const name=document.createElement('div');name.className='angle';name.textContent=label;grid.append(name);
+ for(const version of ['saved','after']){const frame=document.createElement('iframe');frame.dataset.angle=angle;frame.dataset.version=version;frame.title=label+' '+version;grid.append(frame);}
+}
+function show(id){document.querySelectorAll('iframe').forEach(f=>f.src='/character-review.html?portrait='+id+'&angle='+f.dataset.angle+'&faces='+f.dataset.version);document.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.id===String(id))));}
+document.querySelectorAll('button').forEach(b=>b.onclick=()=>show(b.dataset.id));show(3);
+</script></html>

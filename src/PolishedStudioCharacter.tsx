@@ -11,6 +11,8 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { botSeats } from './platterFood';
 import { foodObstacleHeight, foodSurface } from './MansafPlatter';
 import type { Game } from './main';
+import { ChibiFeet } from './ChibiFeet';
+const refinedLook = new URLSearchParams(window.location.search).get('look') !== 'before';
 
 const urls = [
   new URL('./assets/zaid-chibi-polished.glb', import.meta.url).href,
@@ -19,9 +21,10 @@ const urls = [
 ];
 const ease = (t: number) => THREE.MathUtils.smootherstep(t, 0, 1);
 type Arm = { upper: THREE.Bone; fore: THREE.Bone; hand: THREE.Bone; bind: THREE.Quaternion; a: number; b: number };
+type FacePart = { mesh: THREE.Mesh; position: THREE.Vector3; scale: THREE.Vector3; side: number };
 type Rig = { scene: THREE.Group; right: Arm; left: Arm; head: THREE.Bone; chest: THREE.Bone;
   rest: Map<THREE.Bone, THREE.Quaternion>; fingers: THREE.Bone[]; mouths: THREE.Mesh[];
-  eyes: THREE.Mesh[]; skin: THREE.SkinnedMesh[]; mouthSocket: THREE.Vector3 };
+  eyes: THREE.Mesh[]; skin: THREE.SkinnedMesh[]; mouthSocket: THREE.Vector3; eyeParts: FacePart[]; brows: FacePart[]; face?: FacePart };
 
 function dispose(scene: THREE.Object3D) {
   const geometry = new Set<THREE.BufferGeometry>(), materials = new Set<THREE.Material>(), textures = new Set<THREE.Texture>();
@@ -55,22 +58,32 @@ export function PolishedStudioCharacter({ id, game, fallback, onChew, onUnlock }
       if (cancelled) { dispose(gltf.scene); return; }
       loaded = gltf.scene;
       const seat = botSeats[id - 1], yaw = id === 1 ? .85 : id === 3 ? -.85 : 0;
-      loaded.position.set(seat[0], -.40, seat[1]);
+      loaded.position.set(seat[0], refinedLook ? -.28 : -.40, seat[1]);
       loaded.rotation.set(.16, yaw, 0, 'YXZ'); loaded.scale.setScalar(.98);
+      if (refinedLook) loaded.rotation.z = [0,.012,-.010,.016][id];
       loaded.updateMatrixWorld(true);
       const bone = (name: string) => { const b = loaded!.getObjectByName(name); if (!(b instanceof THREE.Bone)) throw new Error(`Missing ${name}`); return b; };
       try {
-        const rest = new Map<THREE.Bone, THREE.Quaternion>(), fingers: THREE.Bone[] = [], mouths: THREE.Mesh[] = [], eyes: THREE.Mesh[] = [], skin: THREE.SkinnedMesh[] = [];
+        const rest = new Map<THREE.Bone, THREE.Quaternion>(), fingers: THREE.Bone[] = [], mouths: THREE.Mesh[] = [], eyes: THREE.Mesh[] = [], skin: THREE.SkinnedMesh[] = [], eyeParts: FacePart[] = [], brows: FacePart[] = [];
+        let face: FacePart|undefined;
         loaded.traverse(n => {
           if (n instanceof THREE.Bone) { rest.set(n, n.quaternion.clone()); if (/^(finger_R|thumb_R)/.test(n.name)) fingers.push(n); }
           if (n instanceof THREE.Mesh) {
-            n.castShadow = true;
-            refineCharacterFace(n, id);
-            if (/^Eye(?:\.?\d+)?$/.test(n.name)) refineCharacterEye(n);
-            if (/Small.?rounded.?nose/i.test(n.name)) refineCharacterNose(n, id); n.receiveShadow = true; n.frustumCulled = false;
+            n.castShadow = true; n.receiveShadow = true; n.frustumCulled = false;
             if (n.morphTargetDictionary?.OPEN !== undefined) mouths.push(n);
             if (n.morphTargetDictionary?.BLINK !== undefined) eyes.push(n);
             if (n instanceof THREE.SkinnedMesh && n.name === 'Hand_R') skin.push(n);
+            refineCharacterFace(n,id);
+            const part={mesh:n,position:n.position.clone(),scale:n.scale.clone(),side:0};n.geometry.computeBoundingBox();part.side=Math.sign(((n.geometry.boundingBox?.min.x??0)+(n.geometry.boundingBox?.max.x??0))*.5);
+            if(/^Eye(?:\.?\d+)?$/.test(n.name)){eyeParts.push(part);refineCharacterEye(n);}if(/Small.?rounded.?nose/i.test(n.name))refineCharacterNose(n,id);if(/^Eyebrow(?:\.\d+)?$/.test(n.name))brows.push(part);if(n.name==='Rounded head')face=part;
+            if (refinedLook && /Keffiyeh/i.test(n.name) && n.material instanceof THREE.MeshStandardMaterial) {
+              const canvas=document.createElement('canvas');canvas.width=canvas.height=64;const ctx=canvas.getContext('2d')!;ctx.fillStyle='#858585';ctx.fillRect(0,0,64,64);for(let x=0;x<64;x++){const v=Math.round(128+14*Math.cos(x/64*Math.PI*6));ctx.fillStyle=`rgb(${v},${v},${v})`;ctx.fillRect(x,0,1,64)}
+              for(let y=0;y<64;y+=3){ctx.fillStyle=y%6?'#929292':'#767676';ctx.fillRect(0,y,64,1)}
+              const bump=new THREE.CanvasTexture(canvas);bump.wrapS=bump.wrapT=THREE.RepeatWrapping;bump.repeat.set(12,12);n.material=n.material.clone();n.material.roughness=.92;n.material.bumpMap=bump;n.material.bumpScale=.018;
+            }
+            if (refinedLook && /Eyebrow/i.test(n.name)) n.rotation.z+=(n.name.includes('L')?1:-1)*[0,.035,-.02,.05][id];
+            if (refinedLook && n.morphTargetDictionary?.OPEN !== undefined) n.scale.x*=[1,1.04,.94,1.08][id];
+            if (refinedLook && /^Shoe/i.test(n.name)) { n.geometry.computeBoundingBox(); const cx=(n.geometry.boundingBox!.min.x+n.geometry.boundingBox!.max.x)*.5; n.position.x+=Math.sign(cx||1)*.16;n.position.z+=.10;n.scale.multiplyScalar(1.07); }
           }
         });
         const arm = (side: string): Arm => {
@@ -82,7 +95,7 @@ export function PolishedStudioCharacter({ id, game, fallback, onChew, onUnlock }
         const head = bone('head'), chest = bone('chest');
         const mouthSocket = new THREE.Vector3(0, 1.94 + (1.75 - 1.94) * 1.18, .414 * 1.18);
         loaded.localToWorld(mouthSocket); head.worldToLocal(mouthSocket);
-        rig.current = { scene: loaded, right: arm('R'), left: arm('L'), head, chest, rest, fingers, mouths, eyes, skin, mouthSocket };
+        rig.current = { scene: loaded, right: arm('R'), left: arm('L'), head, chest, rest, fingers, mouths, eyes, skin, mouthSocket, eyeParts, brows, face };
         p.yaw.setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
         setScene(loaded);
       } catch (error) { console.error(`Character ${id} could not be rigged`, error); dispose(loaded); loaded = undefined; }
@@ -93,15 +106,21 @@ export function PolishedStudioCharacter({ id, game, fallback, onChew, onUnlock }
   useFrame(() => {
     const r = rig.current;
     if (!r || !scene || r.scene !== scene) return;
-    const g = game.current, now = performance.now(), t = (now - g.bites[id]) / 1500;
+    const g = game.current, now = performance.now(), t = (now - g.bites[id]) / (refinedLook ? 2450 : 1500);
     const active = g.phase === 'playing' && g.bites[id] > 0 && t >= 0 && t < 1.25;
     const reach = active ? ease(t / .20) * (1 - ease((t - .58) / .30)) : 0;
     const lift = active ? ease((t - .58) / .30) * (1 - ease((t - 1.02) / .23)) : 0;
     const chew = active && t > .88 && t < 1.04 ? Math.sin((t - .88) * 65) : 0;
     r.rest.forEach((q, bone) => bone.quaternion.copy(q));
-    p.q.setFromAxisAngle(p.axis.set(1, 0, 0), .04 * reach + .007 * Math.sin(now * (.0015 + id * .0001) + id)); r.chest.quaternion.multiply(p.q);
-    p.q.setFromAxisAngle(p.axis.set(1, 0, 0), .055 + reach * .055 - lift * .04 + chew * .008); r.head.quaternion.multiply(p.q);
-    p.q.setFromAxisAngle(p.axis.set(0, 1, 0), -.035 * reach + .015 * Math.sin(now * .0007 + id * 2)); r.head.quaternion.multiply(p.q);
+    const drive=refinedLook?[0,.17,.14,.24][id]:.04,focus=active?ease(t/.16)*(1-ease((t-1.02)/.20)):0;
+    p.q.setFromAxisAngle(p.axis.set(1, 0, 0), drive * reach + .009 * Math.sin(now * (.0015 + id * .0001) + id)); r.chest.quaternion.multiply(p.q);
+    p.q.setFromAxisAngle(p.axis.set(1, 0, 0), .055 + reach * (refinedLook ? .14 : .055) - lift * .07 + chew * .018); r.head.quaternion.multiply(p.q);
+    p.q.setFromAxisAngle(p.axis.set(0, 1, 0), -(refinedLook ? .085 : .035) * reach + .018 * Math.sin(now * .0007 + id * 2)); r.head.quaternion.multiply(p.q);
+    if (refinedLook) { p.q.setFromAxisAngle(p.axis.set(0,0,1),[0,.018,-.024,.030][id]); r.head.quaternion.multiply(p.q); }
+    const gaze=refinedLook?(active?THREE.MathUtils.clamp((g.biteTargets[id][0]-botSeats[id-1][0])*.030,-.045,.045):Math.sin(now*.0011+id)*.008):0;
+    for(const part of r.eyeParts){part.mesh.position.copy(part.position);if(refinedLook){part.mesh.position.x+=gaze;part.mesh.position.y-=focus*.006;}}
+    for(const part of r.brows){part.mesh.position.copy(part.position);part.mesh.scale.copy(part.scale);if(refinedLook){part.mesh.position.x-=part.side*focus*(id===3 ? .055 : .038);part.mesh.position.y-=focus*(id===3 ? .052 : .038);part.mesh.scale.multiplyScalar(1+focus*.10);}}
+    if(r.face){r.face.mesh.scale.copy(r.face.scale);if(refinedLook){const puff=Math.max(0,chew)*.035+focus*.012;r.face.mesh.scale.x*=1+puff;r.face.mesh.scale.y*=1-puff*.45;}}
     scene.updateMatrixWorld(true);
 
         g.botReach ??= [];
@@ -132,8 +151,8 @@ export function PolishedStudioCharacter({ id, game, fallback, onChew, onUnlock }
     const rolling = active ? ease((t - .40) / .15) * (1 - ease((t - .58) / .22)) : 0;
     // The replacement hand uses +Z for the palm and +Y for the fingers.
     // Turn about the forearm to cup upward, then tilt the palm toward the mouth.
-    const flip = active ? THREE.MathUtils.smootherstep(t, .48, .82) * (1 - THREE.MathUtils.smootherstep(t, .95, 1.05)) : 0;
-    orient(Math.PI / 2 - flip * .35, flip * Math.PI + rolling * .08, p.handQ);
+    const flip = active ? THREE.MathUtils.smootherstep(t, refinedLook ? .42 : .48, refinedLook ? .55 : .82) * (1 - THREE.MathUtils.smootherstep(t, .95, 1.05)) : 0;
+    orient(Math.PI / 2 - flip * .35, flip * Math.PI + rolling * .05, p.handQ);
     orient(Math.PI / 2 - .35, Math.PI, p.eatQ);
     p.mouth.copy(r.mouthSocket); r.head.localToWorld(p.mouth);
     p.point.copy(p.foodOffset).multiplyScalar(.98).applyQuaternion(p.eatQ); p.mouth.sub(p.point);
@@ -183,15 +202,25 @@ export function PolishedStudioCharacter({ id, game, fallback, onChew, onUnlock }
       if (liftOut < .004) break;
       p.goal.y += Math.min(liftOut, .25);
     }
-    p.goal.set(.55, .43, .04); scene.localToWorld(p.goal); solve(r.left, p.goal, .35);
+    // Same fix as PolishedBlenderCharacter.tsx's leftHand target: checked
+    // against the real rig and the individual-player-cushion boxes in
+    // Majlis.tsx, this lands the resting hand at the cushion's own height and
+    // footprint (~96% arm extension) instead of pinned up near the torso.
+    // Checked against the real rig and the individual-player-cushion boxes
+    // in Majlis.tsx: lands the resting hand at the cushion's own height and
+    // footprint (~96% of arm extension) instead of pinned up near the torso
+    // (an earlier attempt raised Y alone, which actually shortens the reach
+    // and tightens the fold - the opposite of what was needed).
+    p.goal.set(refinedLook ? .55 : .55, refinedLook ? .45 : .43, refinedLook ? .15 : .04); scene.localToWorld(p.goal); solve(r.left, p.goal, refinedLook ? .46 : .35);
+    if (refinedLook) { p.q.setFromAxisAngle(p.axis.set(0,1,0),-Math.PI/2); r.left.hand.quaternion.copy(r.rest.get(r.left.hand)!).multiply(p.q); }
     scene.updateMatrixWorld(true);
-    const opening = active ? Math.max(0, Math.min(1, lift * (t < .9 ? 1 : .45 + .30 * chew))) : 0;
+    const opening = active ? Math.max(refinedLook&&t<.58 ? .22*focus : 0, Math.min(1, lift * (t < .9 ? 1.32 : .58 + .46 * chew))) : 0;
     for (const mesh of r.mouths) {
       const d = mesh.morphTargetDictionary!, w = mesh.morphTargetInfluences!;
       w[d.HALF_OPEN] = opening < .5 ? opening * 2 : (1 - opening) * 2; w[d.OPEN] = Math.max(0, opening * 2 - 1);
     }
     const blinkT = (now / 1000 + id * 1.17) % (4.2 + id * .37), blink = blinkT < .16 ? Math.sin(blinkT / .16 * Math.PI) : 0;
-    for (const eye of r.eyes) eye.morphTargetInfluences![eye.morphTargetDictionary!.BLINK] = blink;
+    for (const eye of r.eyes) eye.morphTargetInfluences![eye.morphTargetDictionary!.BLINK] = Math.max(blink,refinedLook ? focus*(id===3 ? .34 : .20) : 0);
     if (food.current) {
       food.current.visible = active && t >= .58 && t < .94;
       p.point.copy(p.foodOffset); r.right.hand.localToWorld(p.point); food.current.position.copy(p.point);
@@ -199,7 +228,7 @@ export function PolishedStudioCharacter({ id, game, fallback, onChew, onUnlock }
     }
   }, -.1);
   if (!scene) return <>{fallback}</>;
-  return <group name={`studio-character-${id}`}><primitive object={scene}/><CharacterHands scene={scene} id={id} game={game}/><group ref={food} visible={false}>
+  return <group name={`studio-character-${id}`}><primitive object={scene}/>{refinedLook&&<ChibiFeet id={id}/>}<CharacterHands scene={scene} id={id} game={game}/><group ref={food} visible={false}>
     <mesh scale={[.085, .064, .08]}><sphereGeometry args={[1, 12, 8]}/><meshStandardMaterial color="#e8bc60" roughness={.95}/></mesh>
     {Array.from({ length: 20 }, (_, i) => <mesh key={i} position={[Math.sin(i * 2.4) * .073, Math.sin(i * 1.7) * .047, Math.cos(i * 2.4) * .07]} scale={[.015, .01, .025]}><sphereGeometry args={[1, 6, 4]}/><meshStandardMaterial color="#efd18a" roughness={.9}/></mesh>)}
   </group></group>;

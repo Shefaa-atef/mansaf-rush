@@ -6,6 +6,8 @@ import { Character } from './Characters';
 import { MansafPlatter } from './MansafPlatter';
 import { Majlis } from './Majlis';
 import { RoomReflections } from './RoomReflections';
+import { VisualPolish } from './VisualPolish';
+import { OpponentEffects } from './OpponentEffects';
 import { PlayerHand } from './PlayerHand';
 import { freshLokma, lokmaScore, type Lokma } from './lokma';
 import { botSeats, foodPatches, platterFood } from './platterFood';
@@ -21,9 +23,11 @@ import omarImg from './assets/omar.png';
 import samiImg from './assets/sami.png';
 import './style.css';
 import './photo.css';
+import './arcade.css';
 
 const COLORS = ['#e5b75d', '#e67a65', '#7bb6bb', '#a4b57d'];
 const CHARACTER_PHOTOS = [meImg, zaidImg, omarImg, samiImg];
+const refinedLook = new URLSearchParams(window.location.search).get('look') !== 'before';
 
 const CONFETTI_COLORS = ['#f5d676', '#e67a65', '#7bb6bb', '#a4b57d', '#ffffff'];
 const CONFETTI_PIECES = Array.from({ length: 18 }, (_, i) => i);
@@ -43,6 +47,7 @@ export type Game = {
   biteTargets: [number, number, number][];
   botReach?: Array<{ x: number; y: number; z: number; radius: number }>;
   botPending?: Array<{ amount: number; picked: boolean; taken: number } | undefined>;
+  botResults?: Array<{ at: number; taken: number } | undefined>;
   reason: string;
 };
 
@@ -59,6 +64,7 @@ const initial = (): Game => ({
   bites: [0, 0, 0, 0],
   started: 0,
   nextBots: [0, 0, 0],
+  botResults: [],
   biteTargets: [
     [0, 0, 0],
     [0, 0, 0],
@@ -68,7 +74,7 @@ const initial = (): Game => ({
   reason: '',
 });
 
-function finish(g: Game, reason: string) {
+export function finish(g: Game, reason: string) {
   g.phase = 'ended';
   g.reason = reason;
   g.lokma.gathering = false;
@@ -79,36 +85,40 @@ function Scene({
   game,
   remaining,
   onEat,
+  lang,
 }: {
   game: React.RefObject<Game>;
   remaining: number;
   onEat: (now: number) => void;
+  lang: Lang;
 }) {
   return (
     <>
       <color attach="background" args={['#b08162']} />
       <fog attach="fog" args={['#b08162', 10, 22]} />
-      <ambientLight intensity={0.38} color="#ffe0bb" />
-      <hemisphereLight args={['#ffe7ca', '#6f4a38', 1.0]} />
+      <ambientLight intensity={refinedLook ? 0.30 : 0.38} color={refinedLook ? '#f7e8d7' : '#ffe0bb'} />
+      <hemisphereLight args={refinedLook ? ['#e8f2ff', '#67483b', .78] : ['#ffe7ca', '#6f4a38', 1.0]} />
       <directionalLight
         position={[-3, 6, 4]}
-        intensity={3.05}
-        color="#ffdfb9"
+        intensity={refinedLook ? 2.72 : 3.05}
+        color={refinedLook ? '#ffd6a5' : '#ffdfb9'}
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-normalBias={0.04}
         shadow-bias={-0.00015}
-        shadow-radius={5}
+        shadow-radius={refinedLook ? 7 : 5}
       />
-      <directionalLight position={[3, 4, -2]} intensity={1.2} color="#ffd2a0" />
+      <directionalLight position={[3, 4, -2]} intensity={refinedLook ? .72 : 1.2} color={refinedLook ? '#b8d3e6' : '#ffd2a0'} />
       <directionalLight position={[1, 3, 5]} intensity={0.42} color="#fff2da" />
       <directionalLight position={[-1.5, 2.4, -4.5]} intensity={0.55} color="#ffcf9e" />
       <RoomReflections />
-      <Majlis />
+      <Majlis refined={refinedLook} />
+      {refinedLook && <VisualPolish />}
       <Character id={1} position={[-2.02, 0.02, -0.3]} angle={0.78} game={game} />
       <Character id={2} position={[0, 0.02, -2.05]} angle={0} game={game} />
       <Character id={3} position={[2.02, 0.02, -0.3]} angle={-0.78} game={game} />
-      <MansafPlatter remaining={remaining} />
+      {refinedLook && <OpponentEffects game={game} lang={lang} />}
+      <MansafPlatter remaining={remaining} refined={refinedLook} />
       <PlayerHand game={game} onEat={onEat} />
     </>
   );
@@ -120,7 +130,8 @@ function App() {
     [view, setView] = useState({ ...game.current }),
     [menuOpen, setMenuOpen] = useState(false),
     [helpOpen, setHelpOpen] = useState(false),
-    [introStep, setIntroStep] = useState(0),
+    [lobbyPage, setLobbyPage] = useState<'welcome' | 'steps'>('welcome'),
+    [selectedStep, setSelectedStep] = useState(0),
     [soundMuted, setSoundMuted] = useState(false),
     [lang, setLang] = useState<Lang>(() => (localStorage.getItem('mansaf_lang') as Lang) || 'en');
 
@@ -161,40 +172,63 @@ function App() {
     };
     setMenuOpen(false);
     setHelpOpen(false);
+    sfx.playBismillah();
+    sfx.startAmbient();
     publish();
   };
+
+  // Keep keyboard navigation inside the active dialog and restore its trigger.
+  useEffect(() => {
+    if (!menuOpen && !helpOpen && view.phase !== 'ended') return;
+    const previous = document.activeElement as HTMLElement | null;
+    const dialog = document.querySelector<HTMLElement>('.overlay .modal');
+    const buttons = () => Array.from(dialog?.querySelectorAll<HTMLButtonElement>('button:not(:disabled)') ?? []);
+    buttons()[0]?.focus();
+    const trap = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab') return;
+      const items = buttons(), first = items[0], last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    };
+    document.addEventListener('keydown', trap);
+    return () => { document.removeEventListener('keydown', trap); previous?.focus(); };
+  }, [menuOpen, helpOpen, view.phase]);
 
   // Keyboard shortcut: Escape toggles pause menu
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Escape' && game.current.phase === 'playing') {
+      if (e.code === 'Escape' && helpOpen) {
+        setHelpOpen(false);
+      } else if (e.code === 'Escape' && game.current.phase === 'playing') {
         setMenuOpen((prev) => !prev);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [helpOpen]);
 
   useEffect(() => {
     let frame: number;
     const tick = () => {
       const g = game.current,
         now = performance.now();
-      if (g.phase === 'playing' && !menuOpen) {
+      if (g.phase === 'playing' && !menuOpen && !helpOpen) {
         g.botPending ??= [];
         for (let i = 0; i < 3; i++) {
           const pending = g.botPending[i];
           if (pending) {
             const elapsed = now - g.bites[i + 1];
             const target = g.biteTargets[i + 1];
-            if (!pending.picked && elapsed >= BOT_PICKUP_MS) {
+            if (!pending.picked && elapsed >= (refinedLook ? 1420 : BOT_PICKUP_MS)) {
               pending.taken = platterFood.consume(target[0], target[2], Math.min(g.remaining, pending.amount));
               g.remaining = Math.max(0, g.remaining - pending.taken);
               pending.picked = true;
             }
-            if (elapsed >= BOT_SWALLOW_MS) {
+            if (elapsed >= (refinedLook ? 2300 : BOT_SWALLOW_MS)) {
               g.scores[i + 1] += pending.taken;
               g.eaten[i + 1] += pending.taken;
+              g.botResults ??= [];
+              g.botResults[i] = { at: now, taken: pending.taken };
               g.botPending[i] = undefined;
               if (g.remaining <= 0) finish(g, 'platter');
             }
@@ -223,7 +257,7 @@ function App() {
             }
             if (!target) continue;
             g.bites[i + 1] = now;
-            g.nextBots[i] = now + Math.max(BOT_CYCLE_MS, wait(i));
+            g.nextBots[i] = now + Math.max(refinedLook ? 3300 : BOT_CYCLE_MS, wait(i));
             if (g.remaining <= 0) finish(g, 'platter');
           }
         }
@@ -233,17 +267,19 @@ function App() {
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [menuOpen]);
+  }, [helpOpen, menuOpen]);
 
   const eat = (now: number) => {
     const g = game.current,
       l = g.lokma;
     if (g.phase !== 'playing' || l.failed) return;
 
-    const amount = Math.min(g.remaining, Math.max(1, Math.round(l.amount)));
+    // The rice itself was already pulled off the platter progressively while
+    // gathering (see PlayerHand.tsx) - `l.taken` is the real, already-applied
+    // amount, so this only turns it into score/stats, it doesn't touch the
+    // platter or g.remaining again (that would double-consume).
+    const amount = Math.max(1, Math.round(l.taken));
     const pts = lokmaScore(l, now);
-    platterFood.consume(l.x, l.z, amount);
-    g.remaining -= amount;
     g.eaten[0] += amount;
     g.scores[0] += pts;
     g.bites[0] = now;
@@ -276,29 +312,29 @@ function App() {
     if (view.phase === 'ended') {
       if (!endSounded.current) {
         endSounded.current = true;
-        if (playerWon) sfx.playWin();
-        else sfx.playLose();
+        sfx.stopAmbient();
+        if (playerWon) {
+          sfx.playWin();
+        } else {
+          sfx.playLose();
+          window.setTimeout(() => sfx.playLoseVoice(), 450);
+        }
       }
     } else {
       endSounded.current = false;
     }
   }, [view.phase, playerWon]);
 
-  const introSteps = t.intro.steps.map((step, idx) => ({
-    ...step,
-    photo: [meImg, zaidImg, omarImg, samiImg][idx],
-  }));
-
   return (
-    <main className="game">
+    <main className={`game phase-${view.phase}`}>
       <Canvas
         shadows
-        camera={{ position: [0, 3.75, 5.2], fov: 36 }}
-        onCreated={({ camera }) => camera.lookAt(0, 0.95, -0.05)}
+        camera={{ position: refinedLook ? [0, 3.65, 5.75] : [0, 3.75, 5.2], fov: refinedLook ? 38 : 36 }}
+        onCreated={({ camera }) => camera.lookAt(0, refinedLook ? .67 : .95, -0.05)}
         dpr={[1.5, 2]}
         gl={{ toneMappingExposure: 1.12, antialias: true }}
       >
-        <Scene game={game} remaining={view.remaining} onEat={eat} />
+        <Scene game={game} remaining={view.remaining} onEat={eat} lang={lang} />
       </Canvas>
       <div className="vignette" />
 
@@ -324,7 +360,7 @@ function App() {
           <button
             className="hud-widget-box menu-btn"
             onClick={() => {
-              sfx.playClick();
+              sfx.playOpen();
               setMenuOpen(true);
             }}
             aria-label="Open Menu"
@@ -355,90 +391,66 @@ function App() {
         />
       )}
 
-      {/* 1. INTRO TUTORIAL MODAL */}
       {view.phase === 'ready' && (
-        <div className="overlay">
-          <section className="modal intro-modal-layout">
-            <div className="intro-split-container">
-              <div className="intro-info-col">
-                <span className="eyebrow">{t.intro.eyebrow}</span>
-                <h2>{t.intro.title}</h2>
-                <div className="step-pill">
-                  {t.intro.stepPill(introStep + 1, introSteps.length)}
-                </div>
-                <h3>{introSteps[introStep].title}</h3>
-                <p>{introSteps[introStep].desc}</p>
-
-                <div className="stepper-dots">
-                  {introSteps.map((_, idx) => (
-                    <span
-                      key={idx}
-                      className={`dot ${idx === introStep ? 'active' : ''}`}
-                      onClick={() => {
-                        sfx.playClick();
-                        setIntroStep(idx);
-                      }}
-                    />
-                  ))}
-                </div>
-
-                <div className="intro-actions">
-                  {introStep > 0 && (
-                    <button
-                      className="secondary-btn"
-                      onClick={() => {
-                        sfx.playClick();
-                        setIntroStep(introStep - 1);
-                      }}
-                    >
-                      {t.intro.back}
-                    </button>
-                  )}
-                  {introStep < introSteps.length - 1 ? (
-                    <button
-                      className="primary-btn"
-                      onClick={() => {
-                        sfx.playClick();
-                        setIntroStep(introStep + 1);
-                      }}
-                    >
-                      {t.intro.next}
-                    </button>
-                  ) : (
-                    <button
-                      className="primary-btn"
-                      onClick={() => {
-                        sfx.playConfirm();
-                        start();
-                      }}
-                    >
-                      {t.intro.letsEat}
-                    </button>
-                  )}
-                </div>
+        <section className={`lobby-screen lobby-${lobbyPage}`} aria-label={lang === 'ar' ? 'منسف رش' : 'Mansaf Rush'}>
+          <header className="lobby-toolbar">
+            <span className="edition-stamp">{t.intro.eyebrow}</span>
+            <div className="lobby-settings">
+              <button className="lobby-sound" aria-pressed={!soundMuted} onClick={() => { sfx.setMuted(!soundMuted); setSoundMuted(!soundMuted); }}>{soundMuted ? (lang === 'ar' ? 'الصوت: مكتوم' : 'Sound: off') : (lang === 'ar' ? 'الصوت: مفعل' : 'Sound: on')}</button>
+              <button className="language-switch" onClick={toggleLang}>{t.header.langBtn}</button>
+            </div>
+          </header>
+          {lobbyPage === 'welcome' ? (
+            <div className="lobby-welcome-content">
+              <h1 className="lobby-logo"><img src={logoImg} alt={t.header.logoAlt} /></h1>
+              <p className="lobby-invitation" lang="ar" dir="rtl">طابخين لك منسف!</p>
+              <p className="lobby-tagline">{lang === 'ar' ? 'الشباب جاهزين… ناقصنا إنت.' : 'The boys are ready. Your seat is waiting.'}</p>
+              <button className="primary-btn lobby-enter" onClick={() => { sfx.playPreGameGreeting(); setLobbyPage('steps'); }}>{lang === 'ar' ? 'خذ مكانك' : 'TAKE YOUR SEAT'} <span aria-hidden="true">➜</span></button>
+              <span className="lobby-control-note">{lang === 'ar' ? 'لعبة بلوحة المفاتيح · أربع خطوات وتكون جاهز' : 'KEYBOARD GAME · FOUR QUICK STEPS TO GET READY'}</span>
+            </div>
+          ) : (
+            <div className="lobby-lesson">
+              <div className="lesson-heading">
+                <button className="lobby-back" onClick={() => setLobbyPage('welcome')}>{lang === 'ar' ? '→ الرئيسية' : '← Main menu'}</button>
+                <img src={logoImg} alt={t.header.logoAlt} />
+                <button className="lobby-back" onClick={() => sfx.playPreGameGreeting()}>{lang === 'ar' ? '♫ اسمع العزومة' : '♫ Hear the invite'}</button>
               </div>
-
-              <div className="intro-photo-col">
-                <div className="hero-photo-card">
-                  <img
-                    src={introSteps[introStep].photo}
-                    alt={introSteps[introStep].title}
-                    className="hero-character-img"
-                  />
-                  <div className="photo-caption-badge">
-                    📷 {introSteps[introStep].label}
+              <div className="lesson-title"><span className="eyebrow">{lang === 'ar' ? 'قبل ما نبلّش' : 'BEFORE WE DIG IN'}</span><h1>{lang === 'ar' ? 'أصول اللقمة.' : 'Master the lokma.'}</h1></div>
+              <div className="lesson-tabs" role="tablist" aria-label={t.guide.title}>
+                {t.intro.steps.map((step, index) => <button key={index} id={`lesson-tab-${index}`} role="tab" aria-selected={selectedStep === index} aria-controls="lesson-panel" tabIndex={selectedStep === index ? 0 : -1} onKeyDown={event => {
+                  if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
+                  event.preventDefault();
+                  const direction = lang === 'ar' ? -1 : 1;
+                  const next = event.key === 'Home' ? 0 : event.key === 'End' ? 3 : (selectedStep + (event.key === 'ArrowRight' ? direction : -direction) + 4) % 4;
+                  setSelectedStep(next); document.getElementById(`lesson-tab-${next}`)?.focus();
+                }} onClick={() => { sfx.playClick(); setSelectedStep(index); }}><span>{index + 1}</span><b>{step.title.split(' · ')[1] ?? step.title}</b></button>)}
+              </div>
+              <div className="lesson-panel" id="lesson-panel" role="tabpanel" aria-labelledby={`lesson-tab-${selectedStep}`}>
+                <div className={`lesson-image-slot lesson-image-${selectedStep}`} aria-label={t.intro.steps[selectedStep].label}>
+                  <div className="lesson-key-art" dir="ltr">{[['←', '↑', '↓', '→'], ['SPACE'], ['SPACE', '←', '→'], ['↑']][selectedStep].map((key, index) => <kbd key={index}>{key}</kbd>)}</div>
+                  {selectedStep === 1 && <div className="lesson-demo-meter"><span /></div>}
+                  {selectedStep === 2 && <div className="lesson-rice-ball" aria-hidden="true">●</div>}
+                  {selectedStep === 3 && <div className="lesson-score-art" aria-hidden="true">+10</div>}
+                  <span className="lesson-art-label">{['MOVE', 'SCOOP', 'ROLL', 'EAT'][selectedStep]}</span>
+                </div>
+                <div className="lesson-copy"><span className="eyebrow">{t.intro.stepPill(selectedStep + 1, 4)}</span><h2>{t.intro.steps[selectedStep].title.split(' · ')[1] ?? t.intro.steps[selectedStep].title}</h2><p>{t.intro.steps[selectedStep].desc}</p>
+                  <div className="lesson-navigation">
+                    {selectedStep > 0 && <button className="secondary-btn" onClick={() => setSelectedStep(selectedStep - 1)}>{t.intro.back}</button>}
+                    <button className="primary-btn" onClick={() => { sfx.playConfirm(); if (selectedStep < 3) setSelectedStep(selectedStep + 1); else start(); }}>{selectedStep < 3 ? t.intro.next : t.intro.letsEat}</button>
                   </div>
                 </div>
               </div>
+              <button className="lesson-skip" onClick={start}>{lang === 'ar' ? 'بعرف ألعب — يلا ناكل!' : 'Already know how? Let’s eat!'} <span aria-hidden="true">↗</span></button>
             </div>
-          </section>
-        </div>
+          )}
+          <footer className="lobby-footer"><span>{lang === 'ar' ? 'سدر واحد. أربع شهيات.' : 'ONE PLATTER. FOUR APPETITES.'}</span><span>MANSAF RUSH</span></footer>
+        </section>
       )}
 
       {/* 2. PAUSE MENU MODAL */}
       {menuOpen && (
         <div className="overlay">
-          <section className="modal menu-modal-layout">
+          <section className="modal menu-modal-layout" role="dialog" aria-modal="true" aria-label={t.pauseMenu.title}>
             <span className="eyebrow">{t.pauseMenu.eyebrow}</span>
             <h2>{t.pauseMenu.title}</h2>
 
@@ -455,7 +467,7 @@ function App() {
               <button
                 className="secondary-btn"
                 onClick={() => {
-                  sfx.playClick();
+                  sfx.playOpen();
                   setMenuOpen(false);
                   setHelpOpen(true);
                 }}
@@ -475,8 +487,13 @@ function App() {
                 className="secondary-btn"
                 onClick={() => {
                   const next = !soundMuted;
+                  // Update sfx's internal mute flag synchronously — the
+                  // [soundMuted] effect above only fires after this render,
+                  // so without this the un-mute confirmation blip below
+                  // would still see the old (muted) flag and stay silent.
+                  sfx.setMuted(next);
                   setSoundMuted(next);
-                  if (!next) sfx.playClick();
+                  if (!next) sfx.playToggle(true);
                 }}
               >
                 {soundMuted ? t.pauseMenu.soundMuted : t.pauseMenu.soundOn}
@@ -484,7 +501,7 @@ function App() {
               <button
                 className="danger-btn"
                 onClick={() => {
-                  sfx.playConfirm();
+                  sfx.playRestart();
                   start();
                 }}
               >
@@ -498,9 +515,10 @@ function App() {
       {/* 3. HOW TO PLAY GUIDE MODAL */}
       {helpOpen && (
         <div className="overlay">
-          <section className="modal guide-modal-layout">
+          <section className="modal guide-modal-layout" role="dialog" aria-modal="true" aria-label={t.guide.title}>
             <button
               className="close-btn"
+              aria-label={lang === 'ar' ? 'إغلاق' : 'Close guide'}
               onClick={() => {
                 sfx.playClose();
                 setHelpOpen(false);
@@ -553,7 +571,7 @@ function App() {
       {/* 4. GAME OVER RESULTS MODAL — distinct WIN / LOSE moods for the player */}
       {view.phase === 'ended' && (
         <div className="overlay">
-          <section className={`modal results-modal-layout ${playerWon ? 'is-win' : 'is-lose'}`}>
+          <section className={`modal results-modal-layout ${playerWon ? 'is-win' : 'is-lose'}`} role="dialog" aria-modal="true" aria-label={playerWon ? t.results.youWin : t.results.youLost}>
             {playerWon && (
               <div className="confetti-burst">
                 {CONFETTI_PIECES.map((i) => (
@@ -612,7 +630,7 @@ function App() {
               <button
                 className="primary-btn"
                 onClick={() => {
-                  sfx.playConfirm();
+                  sfx.playRestart();
                   start();
                 }}
               >

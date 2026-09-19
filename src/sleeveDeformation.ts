@@ -28,7 +28,15 @@ export function createSleeveDeformer(rest: Float32Array) {
     for (const ring of rings) {
       const t = ring.t;
       center.lerpVectors(wrist, shoulder, t);
-      frame.identity().slerp(transport, THREE.MathUtils.smoothstep(t, 0, .20));
+      // This blends the cross-section's orientation from "matches the hand's
+      // own rotation" (t=0, at the wrist, for a seamless cuff join) to
+      // "aligned along the straight wrist-shoulder line" further up. Doing
+      // that over just the first 20% of the sleeve's length concentrated the
+      // whole twist correction right at the wrist, reading as a sharp,
+      // unnatural kink where the hand meets the arm. Spreading it over most
+      // of the sleeve's length (matching the .85 the width taper already
+      // uses below) turns it into a gradual forearm bend instead.
+      frame.identity().slerp(transport, THREE.MathUtils.smoothstep(t, 0, .85));
       side.set(1, 0, 0).applyQuaternion(rotation).applyQuaternion(frame);
       normal.set(0, 1, 0).applyQuaternion(rotation).applyQuaternion(frame);
       const width = THREE.MathUtils.lerp(scale.x, 1.1, THREE.MathUtils.smoothstep(t, 0, .85));

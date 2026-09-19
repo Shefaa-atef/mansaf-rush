@@ -54,7 +54,7 @@ export function CharacterHands({ scene, id, game }: { scene: THREE.Group; id: nu
     };
   }, [scene]);
   useFrame((_, delta) => {
-    const g = game.current, t = (performance.now() - g.bites[id]) / 1500;
+    const g = game.current, t = (performance.now() - g.bites[id]) / (new URLSearchParams(location.search).get('look')==='before'?1500:2450);
     const active = g.phase === 'playing' && g.bites[id] > 0 && t >= 0 && t < 1.25;
     const ease = (v: number) => THREE.MathUtils.smoothstep(v, 0, 1);
     let weights: Record<string, number> = { REACH: 1 };
@@ -73,7 +73,7 @@ export function CharacterHands({ scene, id, game }: { scene: THREE.Group; id: nu
     }
     const blend = 1 - Math.exp(-20 * Math.min(delta, .05));
     for (const mesh of hands.current) {
-      const pose = mesh.name.endsWith('_L') ? { REACH: .8 } : weights;
+      const pose = mesh.name.endsWith('_L') ? { REACH: id === 3 ? .35 : .8 } : weights;
       for (const [name, index] of Object.entries(mesh.morphTargetDictionary ?? {})) {
         const values = mesh.morphTargetInfluences!;
         values[index] += ((pose[name as keyof typeof pose] ?? 0) - values[index]) * blend;

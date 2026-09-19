@@ -5,6 +5,7 @@ export type MeterZone = 'underfilled' | 'perfect' | 'overfilled';
 
 export type Lokma = {
   amount: number;
+  taken: number;          // rice already pulled off the platter for this lokma, so far (see PlayerHand.tsx's gathering loop)
   bread: number;
   rolls: number;          // completed rolls into a circle (0..targetRolls)
   targetRolls: number;    // target rolls needed to form circle (3)
@@ -31,6 +32,7 @@ export type Lokma = {
 
 export const freshLokma = (): Lokma => ({
   amount: 0,
+  taken: 0,
   bread: 0,
   rolls: 0,
   targetRolls: 3,

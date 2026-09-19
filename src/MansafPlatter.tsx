@@ -5,7 +5,7 @@ import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 type XZ = [number, number];
 type V3 = [number, number, number];
-type Particle = { position: V3; scale: V3; rotation: V3; color: string; patch: number };
+type Particle = { position: V3; scale: V3; rotation: V3; color: string; refinedColor?: string; patch: number };
 const RICE_RADIUS = 2.025;
 const FLOOR = .275;
 const grainGeometry = new THREE.SphereGeometry(1, 7, 5);
@@ -131,12 +131,15 @@ function ricePatchGeometry(index: number, remaining: number) {
 
 const grains: Particle[] = [], almondParticles: Particle[] = [];
 const riceColors = ['#dfaf37', '#edc34d', '#e5b640', '#f0cd64'];
+const refinedRiceColors = ['#d6a23b', '#dcac45', '#e2b650', '#e7bf61'];
 for (let i = 0; i < 16600; i++) {
   // Even spacing plus small jitter gives a dense surface, not a random particle cloud.
   const a = i * 2.399963 + (random() - .5) * .018;
   const r = Math.sqrt((i + .5) / 16600) * (RICE_RADIUS - .015);
   const x = Math.cos(a) * r, z = Math.sin(a) * r;
-  grains.push({ position: [x, riceHeight(x, z) + .002 + random() * .005, z], scale: [.012 + random() * .003, .007 + random() * .002, .029 + random() * .007], rotation: [(random() - .5) * .20, random() * Math.PI, (random() - .5) * .22], color: riceColors[i % riceColors.length], patch: patchIndex(x, z) });
+  const warmth = Math.sin(x * 2.4 + Math.cos(z * 1.7)) + Math.cos(z * 2.2 - x * .8) + Math.sin((x + z) * 1.3);
+  const cluster = THREE.MathUtils.clamp(Math.floor((warmth + 3) / 1.51), 0, refinedRiceColors.length - 1);
+  grains.push({ position: [x, riceHeight(x, z) + .002 + random() * .005, z], scale: [.012 + random() * .003, .007 + random() * .002, .029 + random() * .007], rotation: [(random() - .5) * .20, random() * Math.PI, (random() - .5) * .22], color: riceColors[i % riceColors.length], refinedColor: refinedRiceColors[cluster], patch: patchIndex(x, z) });
 }
 for (let i = 0; i < 37; i++) {
   const a = i * 2.399963 + random() * .3, r = Math.sqrt((i + .8) / 38) * 1.84;
@@ -144,7 +147,7 @@ for (let i = 0; i < 37; i++) {
   almondParticles.push({ position: [x, riceHeight(x, z) + .024, z], scale: [.033, .019, .066], rotation: [.08, random() * 6, .08], color: ['#bd8549', '#c79255', '#b57b40'][i % 3], patch: patchIndex(x, z) });
 }
 
-function FoodInstances({ particles, remaining, geometry, name }: { particles: Particle[]; remaining: number; geometry: THREE.BufferGeometry; name: string }) {
+function FoodInstances({ particles, remaining, geometry, name, refined = false }: { particles: Particle[]; remaining: number; geometry: THREE.BufferGeometry; name: string; refined?: boolean }) {
   const mesh = useRef<THREE.InstancedMesh>(null);
   useLayoutEffect(() => {
     if (!mesh.current) return;
@@ -156,11 +159,11 @@ function FoodInstances({ particles, remaining, geometry, name }: { particles: Pa
       dummy.position.set(...p.position); dummy.scale.set(...p.scale); dummy.rotation.set(...p.rotation); dummy.updateMatrix();
       dummy.position.y += riceHeight(p.position[0], p.position[2], remaining, p.patch) - fullRiceHeight(p.position[0], p.position[2]);
       dummy.updateMatrix();
-      mesh.current!.setMatrixAt(i, dummy.matrix); mesh.current!.setColorAt(i, color.set(p.color));
+      mesh.current!.setMatrixAt(i, dummy.matrix); mesh.current!.setColorAt(i, color.set(refined && p.refinedColor ? p.refinedColor : p.color));
     });
     mesh.current.count = visible;
     mesh.current.instanceMatrix.needsUpdate = true; mesh.current.instanceColor!.needsUpdate = true; mesh.current.computeBoundingSphere();
-  }, [particles, remaining]);
+  }, [particles, remaining, refined]);
   return <instancedMesh name={name} ref={mesh} args={[geometry, undefined, particles.length]} receiveShadow>
     <meshStandardMaterial vertexColors={!!geometry.getAttribute('color')} roughness={name === 'Almonds' ? .68 : .83} emissive="#b68e36" emissiveIntensity={.025} />
   </instancedMesh>;
@@ -215,27 +218,40 @@ function ShrakBread({ remaining }: { remaining: number }) {
     </mesh>)}</group>;
 }
 
-function Tray() {
+function Tray({ refined = false }: { refined?: boolean }) {
   const geometry = useMemo(() => new THREE.LatheGeometry([
     [0, FLOOR], [1.98, FLOOR], [2.07, .295], [2.17, .349], [2.22, .363],
     [2.246, .348], [2.25, .31], [2.215, .22], [2.12, .13], [0, .13],
   ].map(([x, y]) => new THREE.Vector2(x, y)).reverse(), 128), []);
   return <group name="Tray">
     <mesh name="solid-metal-tray" geometry={geometry} castShadow receiveShadow>
-      <meshStandardMaterial color="#bcbab3" metalness={.78} roughness={.31} emissive="#d3d4d0" emissiveIntensity={.035} />
+      <meshStandardMaterial color={refined ? '#aaa9a3' : '#bcbab3'} metalness={refined ? .64 : .78} roughness={refined ? .42 : .31} emissive="#d3d4d0" emissiveIntensity={refined ? .015 : .035} />
     </mesh>
-    <mesh name="rolled-metal-lip" position={[0, .357, 0]} rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[2.221, .022, 10, 128]} /><meshStandardMaterial color="#e6e4da" metalness={.85} roughness={.24} /></mesh>
+    <mesh name="rolled-metal-lip" position={[0, .357, 0]} rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[2.221, refined ? .014 : .022, 10, 128]} /><meshStandardMaterial color="#d5d4cf" metalness={refined ? .67 : .85} roughness={refined ? .39 : .24} /></mesh>
     <mesh position={[0, .292, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[2.053, 2.06, 128]} /><meshStandardMaterial color="#979a93" metalness={.3} roughness={.5} /></mesh>
   </group>;
 }
-function RiceMound({ remaining }: { remaining: number }) {
+function LowSedrTable() {
+  // The tabletop must stay below the tray's flat underside (local y=.13, the
+  // Tray lathe's bottom disc) - it previously sat with its top flush with the
+  // rice floor itself (both at local y=.275), so the brown wood z-fought with
+  // and poked up through the golden rice. Shrunk and lowered so its top sits
+  // at .095 (a clear .035 gap under the tray), with the legs' bottom left at
+  // its original -.255 so they still meet the floor exactly as before.
+  return <group name="low-wooden-sedr-table">
+    <mesh position={[0,.04,0]} castShadow receiveShadow><cylinderGeometry args={[1.88,1.82,.11,96]} /><meshStandardMaterial color="#6f4027" roughness={.76} /></mesh>
+    <mesh position={[0,.10,0]} rotation={[Math.PI/2,0,0]}><torusGeometry args={[1.84,.035,10,96]} /><meshStandardMaterial color="#4f2d1d" roughness={.8} /></mesh>
+    {Array.from({length:8},(_,i)=>{const a=i/8*Math.PI*2+.18;return <mesh key={i} position={[Math.cos(a)*1.68,-.11,Math.sin(a)*1.68]} castShadow><cylinderGeometry args={[.095,.14,.29,12]} /><meshStandardMaterial color="#55301f" roughness={.82} /></mesh>})}
+  </group>;
+}
+function RiceMound({ remaining, refined = false }: { remaining: number; refined?: boolean }) {
   const ricePatches = useMemo(() => patches.map((p, i) => availablePatch(i) ? ricePatchGeometry(i, remaining) : null), [remaining]);
   useEffect(() => () => ricePatches.forEach(geometry => geometry?.dispose()), [ricePatches]);
   return <group name="RiceMound">
     {ricePatches.map((geometry, i) => geometry && <mesh name={`rice-patch-${i}`} key={i} geometry={geometry} receiveShadow>
-      <meshStandardMaterial color="#e3b33f" roughness={.94} side={THREE.DoubleSide} emissive="#b79034" emissiveIntensity={.025} />
+      <meshStandardMaterial color={refined ? '#d5a33b' : '#e3b33f'} roughness={.94} side={THREE.DoubleSide} emissive="#b79034" emissiveIntensity={refined ? .008 : .025} />
     </mesh>)}
-    <FoodInstances name="individual-rice-grains" particles={grains} geometry={grainGeometry} remaining={remaining} />
+    <FoodInstances name="individual-rice-grains" particles={grains} geometry={grainGeometry} remaining={remaining} refined={refined} />
   </group>;
 }
 
@@ -289,10 +305,10 @@ function meatRestHeight(p: typeof meatPieces[number], remaining: number) {
   for (let i = 0; i < 8; i++) height = Math.max(height, riceHeight(p.x + Math.cos(i * Math.PI / 4) * p.size * .65, p.z + Math.sin(i * Math.PI / 4) * p.size * .65, remaining));
   return height + p.size * .18;
 }
-function MeatPieces({ remaining }: { remaining: number }) {
+function MeatPieces({ remaining, refined = false }: { remaining: number; refined?: boolean }) {
   const map = useMemo(cookedLambTexture, []);
   return <group name="MeatPieces">{meatPieces.map((p, i) => availablePatch(patchIndex(p.x, p.z)) && <group name={`lamb-piece-${i}`} key={i} position={[p.x, meatRestHeight(p, remaining), p.z]} rotation={[0, p.angle, 0]} scale={p.size * 0.85}>
-    <mesh geometry={meatGeometry[i]} castShadow><meshStandardMaterial map={map} vertexColors roughness={.80} /></mesh>
+    <mesh geometry={meatGeometry[i]} castShadow><meshStandardMaterial map={map} color={refined ? '#9b755e' : '#ffffff'} vertexColors roughness={refined ? .87 : .80} /></mesh>
   </group>)}</group>;
 }
 
@@ -310,7 +326,7 @@ function poolField(x: number, z: number) {
   });
   return field;
 }
-function JameedSauce({ remaining }: { remaining: number }) {
+function JameedSauce({ remaining, refined = false }: { remaining: number; refined?: boolean }) {
   const geometries = useMemo(() => {
     if (remaining <= 0) return [];
     const vertices: number[][] = patches.map(() => []);
@@ -365,16 +381,17 @@ function JameedSauce({ remaining }: { remaining: number }) {
     });
   }, [remaining]);
   useEffect(() => () => geometries.forEach(g => g.dispose()), [geometries]);
-  return <group name="JameedSauce">{geometries.map((geometry, i) => <mesh key={i} geometry={geometry} receiveShadow><meshStandardMaterial color="#e9d7b1" roughness={.62} side={THREE.DoubleSide} /></mesh>)}</group>;
+  return <group name="JameedSauce">{geometries.map((geometry, i) => <mesh key={i} geometry={geometry} receiveShadow><meshStandardMaterial color={refined ? '#e5d1aa' : '#e9d7b1'} roughness={refined ? .72 : .62} side={THREE.DoubleSide} /></mesh>)}</group>;
 }
 function Almonds({ remaining }: { remaining: number }) { return <FoodInstances name="Almonds" particles={almondParticles} remaining={remaining} geometry={almondGeometry} />; }
-export const MansafPlatter = memo(function MansafPlatter({ remaining }: { remaining: number }) {
+export const MansafPlatter = memo(function MansafPlatter({ remaining, refined = false }: { remaining: number; refined?: boolean }) {
   return <group name="MansafPlatter" position={[0,.24,0]}>
-    <Tray />
+    {refined && <LowSedrTable />}
+    <Tray refined={refined} />
     <ShrakBread remaining={remaining} />
-    <RiceMound remaining={remaining} />
-    <MeatPieces remaining={remaining} />
-    <JameedSauce remaining={remaining} />
+    <RiceMound remaining={remaining} refined={refined} />
+    <MeatPieces remaining={remaining} refined={refined} />
+    <JameedSauce remaining={remaining} refined={refined} />
     <Almonds remaining={remaining} />
   </group>;
 });

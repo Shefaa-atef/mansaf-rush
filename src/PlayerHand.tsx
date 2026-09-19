@@ -3,41 +3,15 @@ import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { keepHandAboveFood } from './handClearance';
 import { foodObstacleHeight, foodSurface } from './MansafPlatter';
+import { platterFood } from './platterFood';
 import { freshLokma, beginEating, updateMeter, lockMeter, performRoll } from './lokma';
 import { type HandMotion, type HandPoseName } from './handPoses';
 import { playerArmMotion, EATING_TIMING } from './playerArmMotion';
 import { HandFood } from './HandFood';
 import { BlenderPlayerArm } from './BlenderPlayerArm';
-import { isMuted } from './sfx';
+import { playEat, playGatherTip, unlockAudio } from './sfx';
 
 import type { Game } from './main';
-
-let audio: AudioContext | undefined;
-function unlock() {
-  try {
-    audio ??= new AudioContext();
-    void audio.resume();
-  } catch {
-    /* Audio is optional. */
-  }
-}
-function chew() {
-  if (!audio || isMuted()) return;
-  const t = audio.currentTime;
-  for (let i = 0; i < 3; i++) {
-    const o = audio.createOscillator(),
-      v = audio.createGain();
-    o.type = 'triangle';
-    o.frequency.setValueAtTime(180 - i * 25, t + i * 0.07);
-    o.frequency.exponentialRampToValueAtTime(65, t + i * 0.07 + 0.07);
-    v.gain.setValueAtTime(0.055, t + i * 0.07);
-    v.gain.exponentialRampToValueAtTime(0.001, t + i * 0.07 + 0.08);
-    o.connect(v);
-    v.connect(audio.destination);
-    o.start(t + i * 0.07);
-    o.stop(t + i * 0.07 + 0.09);
-  }
-}
 const smooth = (t: number) => THREE.MathUtils.smoothstep(t, 0, 1);
 /**
  * The forearm's screen-space angle is set by (shoulder.x - hand.x), so shifting only one
@@ -61,6 +35,10 @@ export function PlayerHand({
 
   const motion = useRef<HandMotion>({ pose: 'OPEN', pulse: 0 });
   const keysDown = useRef<{ [key: string]: boolean }>({});
+  const mouthSounded = useRef(0);
+  // Plays the "gather it, roll it, take a bite" tip once, the first time the
+  // player actually starts gathering rice in real gameplay (not the tutorial).
+  const gatherTipSounded = useRef(false);
 
   const p = useMemo(
     () => ({
@@ -99,7 +77,7 @@ export function PlayerHand({
         return;
 
       e.preventDefault();
-      unlock();
+      unlockAudio();
       keysDown.current[e.code] = true;
 
       const now = performance.now();
@@ -107,7 +85,13 @@ export function PlayerHand({
       if (e.repeat) return;
       if (e.code === 'Space') {
         l.space = true;
-        if (!l.eating && !l.gathering && !l.shaping && !l.readyToEat) l.gathering = true;
+        if (!l.eating && !l.gathering && !l.shaping && !l.readyToEat) {
+          l.gathering = true;
+          if (!gatherTipSounded.current) {
+            gatherTipSounded.current = true;
+            playGatherTip();
+          }
+        }
       } else if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
         if (l.space && !l.eating && !l.readyToEat) {
           if (l.gathering && l.meter < 45) {
@@ -242,6 +226,29 @@ export function PlayerHand({
           l.almond = l.almond || surface.almond;
           l.meat = l.meat || (l.amount > 2 && surface.meat);
           if (surface.bread) l.bread += dt * 2;
+          // Pull rice off the platter as it's scooped, not only once the whole
+          // lokma is later swallowed - the mound should visibly shrink under
+          // the hand while gathering. `taken` tracks how much of `amount` has
+          // actually been removed so far; eat() in main.tsx uses it instead of
+          // re-consuming the full amount at the end. A failed/underfilled
+          // attempt still keeps this rice gone (spilled/wasted), matching the
+          // scoop already having been taken off the tray.
+          const want = l.amount - l.taken;
+          if (want > 1e-4) {
+            const got = platterFood.consume(l.x, l.z, want);
+            g.remaining = Math.max(0, g.remaining - got);
+            l.taken += got;
+            // Normally a bot-tick notices g.remaining hitting 0 and ends the
+            // round; if the player's own gathering is what empties it, end it
+            // right here instead of waiting on the next bot cycle (mirrors
+            // finish() in main.tsx without importing back from it).
+            if (g.remaining <= 0 && g.phase === 'playing') {
+              g.phase = 'ended';
+              g.reason = 'platter';
+              l.gathering = false;
+              l.space = false;
+            }
+          }
         }
       }
     }
@@ -258,6 +265,10 @@ export function PlayerHand({
       else if (eatT < EATING_TIMING.lower) p.hand.copy(p.mouth);
       else p.hand.lerpVectors(p.mouth, p.target, smooth((eatT - EATING_TIMING.lower) / (EATING_TIMING.end - EATING_TIMING.lower)));
 
+      if (!l.failed && eatT >= EATING_TIMING.lift && mouthSounded.current !== l.eating) {
+        mouthSounded.current = l.eating;
+        playEat('player');
+      }
       if (l.failed && eatT > 0.2 && !l.swallowed) {
         l.swallowed = true;
         l.spill = now;
@@ -265,7 +276,6 @@ export function PlayerHand({
       if (!l.failed && eatT >= EATING_TIMING.swallow && !l.swallowed) {
         l.swallowed = true;
         onEat(now);
-        chew();
       }
       if (eatT > EATING_TIMING.end) {
         g.lokma = { ...freshLokma(), x: l.x, z: l.z };

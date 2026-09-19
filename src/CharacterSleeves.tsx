@@ -52,7 +52,9 @@ export function CharacterSleeves({ scene }: { scene: THREE.Group }) {
       const shoulder = end.clone();
       end.x *= refined ? .52 : .84;
       if (refined) end.y -= .055;
-      cuffDirection.sub(start).normalize().multiplyScalar(.14).add(start);
+      // Follow the wrist axis at the opening so the skin exits through the cuff.
+      cuffDirection.sub(start).normalize();
+      cuffDirection.multiplyScalar(.14).add(start);
       const curve = refined
         ? new THREE.CatmullRomCurve3([start, cuffDirection, elbow, shoulder, end], false, 'centripetal')
         : new THREE.CubicBezierCurve3(start, cuffDirection, elbow, end);

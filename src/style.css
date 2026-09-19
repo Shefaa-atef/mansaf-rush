@@ -140,9 +140,9 @@ canvas {
    ========================================================================== */
 .game-hud-header {
   position: absolute;
-  top: 22px;
-  left: 26px;
-  right: 26px;
+  top: clamp(12px, 2vw, 20px);
+  left: clamp(14px, 2.4vw, 24px);
+  right: clamp(14px, 2.4vw, 24px);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -160,9 +160,11 @@ canvas {
   transform: scale(1.04);
 }
 .hud-logo-img {
-  height: 112px;
+  /* Fluid, but capped well below the old 112px so it reads as a mark,
+     not a banner competing with the HUD widgets next to it. */
+  height: clamp(46px, 6.2vw, 68px);
   width: auto;
-  max-width: 360px;
+  max-width: 220px;
   object-fit: contain;
   filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.75)) drop-shadow(0 2px 5px rgba(0, 0, 0, 0.5));
 }
@@ -170,7 +172,7 @@ canvas {
 .top-right-hud {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 9px;
   pointer-events: auto;
 }
 
@@ -179,25 +181,25 @@ canvas {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1.5px solid rgba(233, 196, 124, 0.28);
-  border-radius: 14px;
+  border-radius: 12px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
 }
 
 .hud-widget-box.remaining-widget {
-  width: 190px;
-  padding: 8px 14px;
+  width: clamp(120px, 15vw, 156px);
+  padding: 6px 12px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 .widget-label {
-  font: 800 11px 'Changa';
-  letter-spacing: 0.5px;
+  font: 800 9.5px 'Changa';
+  letter-spacing: 0.4px;
   color: #b8a994;
   text-transform: uppercase;
 }
 .widget-value {
-  font: 900 24px/1 'Changa';
+  font: 900 19px/1 'Changa';
   color: #f5d676;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
   display: flex;
@@ -206,17 +208,17 @@ canvas {
 }
 .widget-value em {
   font-style: normal;
-  font-size: 14px;
+  font-size: 12px;
   color: #b8a994;
   font-weight: 700;
 }
 .widget-bar-track {
-  height: 6px;
+  height: 5px;
   background: #120b07;
   border-radius: 6px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  margin-top: 2px;
+  margin-top: 1px;
 }
 .widget-bar-fill {
   height: 100%;
@@ -227,18 +229,18 @@ canvas {
 }
 
 .hud-widget-box.menu-btn {
-  height: 48px;
-  padding: 0 20px;
+  height: 40px;
+  padding: 0 15px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 7px;
   background: linear-gradient(180deg, #f5d676, #c8953c);
   border: 1.5px solid #fff3d6;
-  border-bottom: 3.5px solid #7c581a;
-  border-radius: 14px;
+  border-bottom: 3px solid #7c581a;
+  border-radius: 12px;
   color: #271b12;
-  font: 900 14px 'Changa', sans-serif;
+  font: 900 12.5px 'Changa', sans-serif;
   letter-spacing: 0.5px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
@@ -1051,22 +1053,16 @@ canvas {
 
 /* Responsive Overrides */
 @media (max-width: 700px) {
-  .game-hud-header {
-    top: 14px;
-    left: 14px;
-    right: 14px;
+  /* .game-hud-header and .hud-logo-img already scale fluidly via clamp()
+     above; these just tighten the two widgets a bit further for phones. */
+  .hud-widget-box.remaining-widget {
+    width: 112px;
+    padding: 5px 9px;
   }
-  .hud-logo-img {
-    height: 60px;
-  }
-  .remaining-hud-box {
-    width: 130px;
-    padding: 6px 10px;
-  }
-  .hud-menu-btn {
-    height: 40px;
-    padding: 0 14px;
-    font-size: 12px;
+  .hud-widget-box.menu-btn {
+    padding: 0 12px;
+    gap: 5px;
+    font-size: 11.5px;
   }
   .scoreboard-footer {
     left: 10px;
@@ -1148,3 +1144,44 @@ canvas {
   direction: ltr;
 }
 
+/* Main-screen polish: let the majlis remain visible behind a calm, readable
+   welcome card instead of burying the whole scene under black. */
+.overlay {
+  background:
+    radial-gradient(circle at 50% 42%, rgba(209, 153, 93, .12), transparent 42%),
+    rgba(17, 12, 9, .62);
+  backdrop-filter: blur(4px) saturate(1.08);
+}
+.modal {
+  background: linear-gradient(145deg, rgba(40, 27, 19, .97), rgba(22, 16, 12, .96));
+  border-color: rgba(245, 214, 118, .48);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .62), 0 0 0 1px rgba(255,255,255,.04) inset;
+}
+.intro-modal-layout {
+  width: min(720px, 94vw);
+  padding: 30px 34px;
+}
+.intro-split-container { gap: 34px; }
+.intro-info-col h2 {
+  font-size: clamp(28px, 4vw, 38px);
+  line-height: 1.05;
+  letter-spacing: -.4px;
+  margin-bottom: 16px;
+  text-shadow: 0 4px 18px rgba(0,0,0,.35);
+}
+.intro-info-col h3 { font-size: 19px; }
+.intro-info-col p { max-width: 34ch; }
+.hero-photo-card {
+  background: linear-gradient(160deg, rgba(101, 63, 38, .72), rgba(20, 14, 10, .92));
+  border-color: rgba(245, 214, 118, .42);
+  padding: 16px;
+  transform: rotate(1.2deg);
+}
+.hero-character-img {
+  width: 156px;
+  height: 156px;
+  border-width: 2px;
+  border-color: #f5d676;
+}
+.hud-logo-stamp { filter: drop-shadow(0 5px 16px rgba(0,0,0,.35)); }
+.game-hud-header { padding: 3px 4px; }

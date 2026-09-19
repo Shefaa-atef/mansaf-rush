@@ -12,14 +12,14 @@ function canvasTexture(draw: (ctx: CanvasRenderingContext2D) => void, repeats: [
   return texture;
 }
 
-export function textile(repeats: [number, number] = [2, 1]) {
+export function textile(repeats: [number, number] = [2, 1], refined = false) {
   return canvasTexture(ctx => {
-    ctx.fillStyle = '#86282e'; ctx.fillRect(0, 0, 512, 512);
+    ctx.fillStyle = refined ? '#74363a' : '#86282e'; ctx.fillRect(0, 0, 512, 512);
     const diamond = (x: number, y: number, w: number, h: number, color: string) => {
       ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(x, y - h); ctx.lineTo(x + w, y); ctx.lineTo(x, y + h); ctx.lineTo(x - w, y); ctx.closePath(); ctx.fill();
     };
-    for (const y of [16, 240, 272, 496]) { ctx.fillStyle = '#c5a178'; ctx.fillRect(0, y, 512, 5); }
-    for (const y of [32, 224, 288, 480]) { ctx.fillStyle = '#29292a'; ctx.fillRect(0, y, 512, 12); }
+    for (const y of [16, 240, 272, 496]) { ctx.fillStyle = refined ? '#b59a7c' : '#c5a178'; ctx.fillRect(0, y, 512, 5); }
+    for (const y of [32, 224, 288, 480]) { ctx.fillStyle = refined ? '#343130' : '#29292a'; ctx.fillRect(0, y, 512, 12); }
     for (const y of [70, 186, 326, 442]) for (let x = 0; x < 512; x += 32) {
       diamond(x, y, 11, 15, '#d2b085'); diamond(x, y, 4, 6, '#4b4b40');
     }
@@ -35,10 +35,10 @@ export function textile(repeats: [number, number] = [2, 1]) {
   }, repeats);
 }
 
-export function minimalTextile(repeats: [number, number] = [2, 1]) {
+export function minimalTextile(repeats: [number, number] = [2, 1], refined = false) {
   return canvasTexture(ctx => {
     // Rich Sadu Maroon base
-    ctx.fillStyle = '#86282e';
+    ctx.fillStyle = refined ? '#74363a' : '#86282e';
     ctx.fillRect(0, 0, 512, 512);
 
     // Clean, minimal accent stripes (top & bottom borders only)

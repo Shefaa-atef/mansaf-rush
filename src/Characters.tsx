@@ -14,14 +14,13 @@ import { keffiyeh } from './materials';
 import type { Game } from './main';
 import { PlayerHandModel } from './PlayerHandModel';
 import { HAND_POSES, type HandMotion, type HandPoseName } from './handPoses';
-import { isMuted } from './sfx';
+import { playEat, unlockAudio } from './sfx';
 
 type V3 = [number, number, number];
 const rounded = new RoundedBoxGeometry(1, 1, 1, 4, .30);
 const sphere = new THREE.SphereGeometry(1, 24, 16);
-let botAudio:AudioContext|undefined;
-function enableBotSound(){try{botAudio??=new AudioContext();void botAudio.resume();}catch{/* Sound is optional. */}}
-function botChew(){if(!botAudio||botAudio.state!=='running'||isMuted())return;const t=botAudio.currentTime,o=botAudio.createOscillator(),gain=botAudio.createGain();o.type='triangle';o.frequency.setValueAtTime(130,t);o.frequency.exponentialRampToValueAtTime(60,t+.10);gain.gain.setValueAtTime(.018,t);gain.gain.exponentialRampToValueAtTime(.001,t+.12);o.connect(gain);gain.connect(botAudio.destination);o.start(t);o.stop(t+.13);}
+function enableBotSound(){unlockAudio();}
+function botChew(){playEat('bot');}
 
 function Round({ position = [0, 0, 0], size, color, map, box = false, rotation = [0, 0, 0] }: {
   position?: V3; size: V3; color: string; map?: THREE.Texture; box?: boolean; rotation?: V3;

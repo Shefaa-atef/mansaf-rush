@@ -1,0 +1,11 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Sami — Hair comparison</title>
+<style>*{box-sizing:border-box}body{margin:0;background:#19251f;color:#f4ead8;font:14px Arial,sans-serif}header{padding:16px 20px}h1{font-size:22px;margin:0 0 6px}p{margin:0;color:#c9c5b9}.grid{display:grid;grid-template-columns:55px 1fr 1fr;gap:8px;padding:0 16px 16px}.label{padding:6px;font-size:11px;letter-spacing:1px;color:#e7c48a}.angle{align-self:center;font-size:12px}iframe{width:100%;height:calc((100vh - 146px)/3);min-height:140px;border:0;border-radius:10px}</style>
+<header><h1>Sami's hair · fuller at the back</h1><p>A little more volume and coverage at the back, with the same front and crown.</p></header>
+<div class="grid"><div></div><div class="label">BEFORE</div><div class="label">AFTER</div></div>
+<script type="module">
+const grid=document.querySelector('.grid');
+for(const [label,angle] of [['Side',1.35],['Rear ¾',2.35],['Back',3.14]]){
+ const name=document.createElement('div');name.className='angle';name.textContent=label;grid.append(name);
+ for(const version of ['tidy','after']){const frame=document.createElement('iframe');frame.title=label+' '+(version==='tidy'?'before':'after');frame.src='/character-review.html?portrait=3&angle='+angle+'&hair='+version;grid.append(frame);}
+}
+</script></html>

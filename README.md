@@ -1,5 +1,9 @@
 # Mansaf Rush
 
+Play online: https://Shefaa-atef.github.io/mansaf-rush/
+
+Pushes to `main` automatically build and publish the game to GitHub Pages.
+
 A single-player, one-handed mansaf game built with React, TypeScript, Three.js, and React Three Fiber. The hand uses nested geometry and finger pivots; no imported rigs or physics.
 
 ## Run
