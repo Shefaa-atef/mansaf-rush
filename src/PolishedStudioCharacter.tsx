@@ -212,7 +212,7 @@ export function PolishedStudioCharacter({ id, game, fallback, onChew, onUnlock }
     // (an earlier attempt raised Y alone, which actually shortens the reach
     // and tightens the fold - the opposite of what was needed).
     // Pull Zaid's resting hand back toward his side, away from the platter.
-    p.goal.set(refinedLook && id === 1 ? .40 : .55, refinedLook ? .45 : .43, refinedLook && id === 1 ? -.02 : refinedLook ? .15 : .04); scene.localToWorld(p.goal); solve(r.left, p.goal, refinedLook ? .46 : .35);
+    p.goal.set(refinedLook && id === 1 ? .43 : .55, refinedLook ? .45 : .43, refinedLook && id === 1 ? .01 : refinedLook ? .15 : .04); scene.localToWorld(p.goal); solve(r.left, p.goal, refinedLook ? .46 : .35);
     if (refinedLook) { p.q.setFromAxisAngle(p.axis.set(0,1,0),-Math.PI/2); r.left.hand.quaternion.copy(r.rest.get(r.left.hand)!).multiply(p.q); }
     scene.updateMatrixWorld(true);
     const opening = active ? Math.max(refinedLook&&t<.58 ? .22*focus : 0, Math.min(1, lift * (t < .9 ? 1.32 : .58 + .46 * chew))) : 0;

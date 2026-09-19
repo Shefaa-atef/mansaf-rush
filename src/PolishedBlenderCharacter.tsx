@@ -302,7 +302,7 @@ export function PolishedBlenderCharacter({ id, game, fallback, onChew, onUnlock 
             p.goal.set(refinedLook ? .55 : .55, refinedLook ? .45 : .43, refinedLook ? .15 : .04);
             asset.localToWorld(p.goal);
             // Rest near the tray's edge, nudged slightly toward Sami's side.
-            if (refinedLook && id === 3) p.goal.set(2.04, .16, -.45);
+            if (refinedLook && id === 3) p.goal.set(2.08, .16, -.45);
             p.direction.subVectors(p.goal, p.shoulder);
             const restLengths = extendArmForReach(leftFore, leftHand, r.a, r.b, p.direction.length(), refinedLook && id === 3);
             const d = THREE.MathUtils.clamp(p.direction.length(), Math.abs(restLengths.a - restLengths.b) + .001, restLengths.a + restLengths.b - .001);
