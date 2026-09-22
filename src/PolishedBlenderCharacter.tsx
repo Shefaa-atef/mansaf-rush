@@ -340,7 +340,9 @@ export function PolishedBlenderCharacter({ id, game, fallback, onChew, onUnlock 
             asset.updateMatrixWorld(true);
         }
         if (food.current) {
-            food.current.visible = active && t >= .58 && t < .94;
+            // Hidden on phone-sized screens: this bite-food ball is tuned for the desktop hand/camera
+            // and reads wrong (too small, wrong spot) at the closer mobile camera distance.
+            food.current.visible = window.innerWidth > 700 && active && t >= .58 && t < .94;
             p.goal.set(0, .23, .07);
             r.hand.localToWorld(p.goal);
             food.current.position.copy(p.goal);

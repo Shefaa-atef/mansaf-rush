@@ -58,7 +58,10 @@ function OpponentBadge({ id, game, bag }: { id: number; game: RefObject<Game>; b
     lastResultAt = useRef(0),
     shownAt = useRef(-Infinity),
     active = useRef<{ kind: BubbleKind; index: number } | undefined>(undefined);
-  const [x, z] = botSeats[id - 1],
+  const mobile = window.innerWidth <= 700;
+  const [x, z] = mobile
+    ? (id === 1 ? [-1.62, -1.1] : id === 2 ? [0, -1.75] : [1.62, -1.1])
+    : botSeats[id - 1],
     baseY = id === 2 ? 1.82 : 2.15;
 
   useFrame(() => {
@@ -97,7 +100,7 @@ function OpponentBadge({ id, game, bag }: { id: number; game: RefObject<Game>; b
     const enter = THREE.MathUtils.smootherstep(phase, 0, 0.08),
       exit = 1 - THREE.MathUtils.smootherstep(phase, 0.88, 1),
       pop = enter * exit;
-    sprite.current.scale.set(0.96 * pop, 0.39 * pop, 1);
+    sprite.current.scale.set((mobile ? 1.25 : 0.96) * pop, (mobile ? 0.52 : 0.39) * pop, 1);
     sprite.current.position.y = baseY + Math.sin(Math.min(1, phase) * Math.PI) * 0.045;
   });
 

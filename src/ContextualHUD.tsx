@@ -52,8 +52,6 @@ export function ContextualHUD({
         ) : lokma.shaping ? (
           <div className="hud-state-fade">
             <div className="key-action-group">
-              <KeyCap wide>{space}</KeyCap>
-              <span className="hud-dot-sep">+</span>
               <KeyCap>←</KeyCap>
               <KeyCap>→</KeyCap>
             </div>

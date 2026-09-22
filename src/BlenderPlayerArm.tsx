@@ -13,6 +13,7 @@ export function BlenderPlayerArm({ motion, hand, shoulder, elbow, game }: {
   motion: RefObject<HandMotion>; hand: RefObject<THREE.Group | null>;
   shoulder: THREE.Vector3; elbow: THREE.Vector3; game: RefObject<Game>;
 }) {
+  const mobileViewport = typeof window !== 'undefined' && window.innerWidth <= 700;
   const gl = useThree(state => state.gl);
   const root = useRef<THREE.Group>(null);
   const skin = useRef<THREE.Mesh | null>(null);
@@ -41,6 +42,10 @@ export function BlenderPlayerArm({ motion, hand, shoulder, elbow, game }: {
       const parts: THREE.Mesh[] = [];
       asset.traverse(node => { if (node instanceof THREE.Mesh) parts.push(node); });
       for (const part of parts) {
+        // On phones the full first-person forearm overwhelms the platter. Keep only
+        // the authored hand mesh so it reads as a clean standalone touch hand.
+        const keepMobilePart = /handskin|cuff|wrist|bracelet/i.test(part.name);
+        if (mobileViewport && !keepMobilePart) continue;
         part.castShadow = true; part.frustumCulled = false;
         for (const material of Array.isArray(part.material) ? part.material : [part.material]) {
           if (material instanceof THREE.MeshStandardMaterial && material.map) {
@@ -50,6 +55,21 @@ export function BlenderPlayerArm({ motion, hand, shoulder, elbow, game }: {
         }
         if (part.name === 'Sleeve') {
           sleeve.current = part;
+          if (mobileViewport) {
+            part.geometry.computeBoundingBox();
+            const bounds = part.geometry.boundingBox;
+            if (bounds) {
+              const radius = Math.max(0.07, Math.min(Math.abs(bounds.max.x - bounds.min.x), Math.abs(bounds.max.z - bounds.min.z)) * 0.46);
+              const cap = new THREE.Mesh(
+                new THREE.CylinderGeometry(radius, radius * 0.94, 0.035, 20),
+                new THREE.MeshStandardMaterial({ color: '#d7a46f', roughness: 0.82 }),
+              );
+              cap.name = 'mobile-sleeve-wrist-cap';
+              cap.position.set((bounds.min.x + bounds.max.x) * 0.5, bounds.max.y + 0.012, (bounds.min.z + bounds.max.z) * 0.5);
+              cap.castShadow = true;
+              root.current?.add(cap);
+            }
+          }
           const positions = part.geometry.attributes.position;
           original.current = new Float32Array(positions.count * 3);
           for (let i = 0; i < positions.count; i++) {

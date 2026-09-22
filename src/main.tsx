@@ -5,6 +5,8 @@ import { freshLokma, lokmaScoreParts, type Lokma } from './lokma';
 import { botSeats, foodPatches, platterFood } from './platterFood';
 import { ContextualHUD } from './ContextualHUD';
 import { Scoreboard } from './Scoreboard';
+import { TouchControls } from './TouchControls';
+import { MobileHeader } from './MobileHeader';
 import { type Lang, TRANSLATIONS, isolateLtr } from './i18n';
 import { formatNumber, roundTo2 } from './formatNumber';
 import * as sfx from './sfx';
@@ -20,10 +22,14 @@ import loseImg from './assets/web/result-lose.webp';
 import scoopStepImg from './assets/web/step-gather.webp';
 import rollStepImg from './assets/web/step-roll.webp';
 import eatStepImg from './assets/web/step-eat.webp';
+import mobileGatherImg from './assets/web/mobile-step-gather.png';
+import mobileRollImg from './assets/web/mobile-step-roll.png';
+import mobileEatImg from './assets/web/mobile-step-eat.png';
 import './style.css';
 import './photo.css';
 import './arcade.css';
 import './game-ui.css';
+import './mobile.css';
 
 // The 3D scene (three.js, react-three-fiber, every model and texture) lives in GameCanvas and is
 // loaded on demand, so the lobby can paint before any of it is downloaded or parsed. Nothing
@@ -44,6 +50,19 @@ const GameCanvas = lazy(() => loadScene().then((module) => ({ default: module.Ga
 const COLORS = ['#e5b75d', '#e67a65', '#7bb6bb', '#a4b57d'];
 const CHARACTER_PHOTOS = [meImg, zaidImg, omarImg, samiImg];
 const STEP_PHOTOS = [scoopStepImg, rollStepImg, eatStepImg];
+const MOBILE_STEP_PHOTOS = [mobileGatherImg, mobileRollImg, mobileEatImg];
+const MOBILE_STEPS = {
+  en: [
+    { label: 'Tap and scoop', title: 'Scoop', desc: 'Use the wheel to reach the rice, then hold Scoop. Release when your palm is full.' },
+    { label: 'Roll the lokma', title: 'Roll', desc: 'Tap left and right on the wheel to shape one round lokma.' },
+    { label: 'Take the bite', title: 'Eat', desc: 'When the lokma is green, tap Eat and score your bite.' },
+  ],
+  ar: [
+    { label: 'اجمع الرز', title: 'اجمع', desc: 'حرّك العجلة نحو الرز واضغط مطولاً على جمع، ثم اتركه عندما تمتلئ يدك.' },
+    { label: 'دوّر اللقمة', title: 'دوّر', desc: 'اضغط يميناً ويساراً على العجلة حتى تصبح اللقمة مستديرة.' },
+    { label: 'خذ اللقمة', title: 'كُل', desc: 'عندما تصبح اللقمة خضراء، اضغط كُل لتحصل على النقاط.' },
+  ],
+} as const;
 const refinedLook = new URLSearchParams(window.location.search).get('look') !== 'before';
 
 const CONFETTI_COLORS = ['#f5d676', '#e67a65', '#7bb6bb', '#a4b57d', '#ffffff'];
@@ -138,6 +157,7 @@ function App() {
   langRef.current = lang;
   const names = t.names;
   const traits = t.traits;
+  const mobileSteps = window.innerWidth <= 700 ? MOBILE_STEPS[lang] : t.intro.steps;
 
   const toggleLang = () => {
     const nextLang: Lang = lang === 'en' ? 'ar' : 'en';
@@ -188,6 +208,14 @@ function App() {
     gatherTipPlayed.current = false;
     sfx.playBismillah();
     sfx.startAmbient();
+    publish();
+  };
+
+  // From the results screen, leave the round behind and return to the lobby (title screen)
+  // instead of jumping straight into a new round. The scene stays mounted, so pressing Play
+  // again from the lobby begins at once.
+  const backToLobby = () => {
+    game.current = initial();
     publish();
   };
 
@@ -402,6 +430,7 @@ function App() {
         </Suspense>
       )}
       <div className="vignette" />
+      {view.phase === 'playing' && <MobileHeader scores={view.scores} names={names} remaining={view.remaining} onMenu={() => setMenuOpen(true)} />}
 
       {/* Top Header Bar */}
       <header className="game-hud-header">
@@ -443,6 +472,7 @@ function App() {
       )}
 
       {/* 4-Player Scoreboard */}
+      {view.phase === 'playing' && <TouchControls lokma={view.lokma} lang={lang} enabled={!menuOpen && !helpOpen} />}
       {view.phase === 'playing' && (
         <Scoreboard
           scores={view.scores}
@@ -481,14 +511,14 @@ function App() {
               <div className="lobby-guide-heading"><span aria-hidden="true">✦</span><h2>{t.lobby.guideHeading}</h2><span aria-hidden="true">✦</span></div>
               <p className="lobby-guide-subtitle">{t.lobby.guideSubtitle}</p>
               <ol className="lobby-steps" aria-label={t.intro.title}>
-                {t.intro.steps.map((step, index) => (
+                {mobileSteps.map((step, index) => (
                   <li className="lobby-step" key={step.label}>
                     <span className="lobby-step-number" aria-hidden="true">{index + 1}</span>
-                    <img className="lobby-step-photo" src={STEP_PHOTOS[index]} alt={step.label} width="720" height="720" loading="lazy" decoding="async" />
+                    <img className="lobby-step-photo" src={(window.innerWidth <= 700 ? MOBILE_STEP_PHOTOS : STEP_PHOTOS)[index]} alt={step.label} width="720" height="720" loading="lazy" decoding="async" />
                     <div className="lobby-step-copy">
                       <h3>{step.title}</h3>
                       <p>{step.desc}</p>
-                      <div className="lobby-step-keys" dir="ltr" aria-hidden="true">{[['↑ ↓ ← →', t.keys.space], [t.keys.space, '← →'], ['↑']][index].map(key => <kbd key={key}>{key}</kbd>)}</div>
+                      <div className="lobby-step-keys" dir="ltr" aria-hidden="true">{[['↑ ↓ ← →', t.keys.space], ['← →'], ['↑']][index].map(key => <kbd key={key}>{key}</kbd>)}</div>
                     </div>
                   </li>
                 ))}
@@ -661,6 +691,15 @@ function App() {
                   }}
                 >
                   {playerWon ? t.results.playAgain : t.results.tryAgain}
+                </button>
+                <button
+                  className="secondary-btn"
+                  onClick={() => {
+                    sfx.playClick();
+                    backToLobby();
+                  }}
+                >
+                  {t.results.backToLobby}
                 </button>
               </div>
             </div>

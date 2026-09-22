@@ -25,6 +25,12 @@ function EmptySeat({ id }: { id: number }) {
 // position and angle are placed by each character's own model; they stay in the props only because callers pass them.
 export const Character = memo(function Character(props: { id: number; position: V3; angle: number; game: RefObject<Game> }) {
   const empty = <EmptySeat id={props.id} />;
-  if (new URLSearchParams(window.location.search).get('characters') !== 'original') return props.id === 1 ? <PolishedStudioCharacter id={props.id} game={props.game} fallback={empty} onChew={botChew} onUnlock={enableBotSound}/> : <PolishedBlenderCharacter id={props.id} game={props.game} fallback={empty} onChew={botChew} onUnlock={enableBotSound}/>;
-  return props.id === 1 ? <StudioCharacter id={props.id} game={props.game} fallback={empty} onChew={botChew} onUnlock={enableBotSound}/> : <BlenderCharacter id={props.id} game={props.game} fallback={empty} onChew={botChew} onUnlock={enableBotSound}/>;
+  const mobile = window.innerWidth <= 700;
+  const defaults: V3[] = [[0, 0, 0], [-2.02, 0, -0.3], [0, 0, -2.05], [2.02, 0, -0.3]];
+  const base = defaults[props.id];
+  const offset: V3 = mobile ? [props.position[0] - base[0], props.position[1], props.position[2] - base[2]] : [0, 0, 0];
+  const child = new URLSearchParams(window.location.search).get('characters') !== 'original'
+    ? (props.id === 1 ? <PolishedStudioCharacter id={props.id} game={props.game} fallback={empty} onChew={botChew} onUnlock={enableBotSound}/> : <PolishedBlenderCharacter id={props.id} game={props.game} fallback={empty} onChew={botChew} onUnlock={enableBotSound}/>)
+    : (props.id === 1 ? <StudioCharacter id={props.id} game={props.game} fallback={empty} onChew={botChew} onUnlock={enableBotSound}/> : <BlenderCharacter id={props.id} game={props.game} fallback={empty} onChew={botChew} onUnlock={enableBotSound}/>);
+  return <group position={offset}>{child}</group>;
 });

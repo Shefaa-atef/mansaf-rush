@@ -12,13 +12,12 @@ A one-handed, single-player race to finish a shared plate of mansaf before three
 
 | Key | Does |
 |---|---|
-| Arrow keys | Move your hand over the platter, and steer while scooping or rolling |
+| Arrow keys | Move your hand over the platter, steer while scooping, and roll the lokma once the scoop is locked |
 | Hold **SPACE** | Scoop rice from under your hand |
 | Release **SPACE** | Lock the scoop |
-| Hold **SPACE** again | Roll the lokma; tap **←/→** while holding it |
 | **↑** | Eat the lokma |
 
-There's no gauge while you scoop, just a badge once you've taken enough. Letting go of **SPACE** locks the scoop size, and only then does holding **SPACE** again start rolling, so steering can never squash a bite by accident. A press of **↑** just before the last roll finishes is remembered and served automatically once it settles.
+There's no gauge while you scoop, just a badge once you've taken enough. Letting go of **SPACE** locks the scoop size, and only then do **←/→** taps roll it, so steering can never squash a bite by accident. No need to hold SPACE again to roll — a tap of either arrow is enough. A press of **↑** just before the last roll finishes is remembered and served automatically once it settles.
 
 Once you're rolling, a green/red gauge tracks the lokma's shape. How many rolls it takes to go round depends on how much you scooped, from about six rolls for a small pinch up to eleven for a full palm, and the counter on screen shows how many are left. It stays round for four more rolls, and the one after that squashes it.
 

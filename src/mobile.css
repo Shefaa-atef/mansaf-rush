@@ -1,0 +1,67 @@
+.touch-controls { display:none; }
+.mobile-header { display:none; }
+@media (max-width: 700px), (hover: none) and (pointer: coarse) {
+  .game { --touch-bottom:max(12px, env(safe-area-inset-bottom)); }
+  .game .game-scene { position:absolute !important; inset:0; height:100% !important; width:100%; }
+  .game-hud-header { top:max(8px, env(safe-area-inset-top)); left:12px; right:12px; padding:0; }
+  .hud-widget-box { padding:7px 12px; min-width:0; }
+  .game-hud-header, .scoreboard-footer { display:none !important; }
+  .mobile-header { display:grid; position:absolute; z-index:30; top:max(8px, env(safe-area-inset-top)); left:6px; right:6px; height:108px; grid-template-columns:50px 1fr 90px; grid-template-rows:46px 36px; align-items:center; gap:5px 10px; padding:8px 9px 16px; border:2px solid #c89550; border-radius:19px; background:linear-gradient(110deg,#3a2117,#68432d 55%,#3a2117); box-shadow:0 6px 0 #281510, inset 0 1px #f7d88b55; }
+  .mobile-header-menu { grid-row:1; width:46px; height:42px; border:1px solid #e1b967; border-radius:12px; background:#291710; color:#ffe29a; font-size:23px; }
+  .mobile-header-brand { grid-row:1; display:flex; align-items:baseline; gap:6px; color:#ffe8b0; font:900 18px/1 'Outfit','Changa',sans-serif; letter-spacing:1px; }
+  .mobile-header-brand strong { color:#ffcf55; font-size:23px; }
+  .mobile-header-remaining { grid-row:1; text-align:center; color:#ffe4a0; line-height:1; }
+  .mobile-header-remaining small { display:block; font:800 8px 'Changa'; opacity:.8; }
+  .mobile-header-remaining b { font:900 26px 'Outfit'; }
+  .mobile-header-players { grid-column:1 / -1; display:grid; grid-template-columns:repeat(4,1fr); gap:5px; align-self:end; padding-bottom:2px; }
+  .mobile-header-player { min-width:0; height:32px; display:flex; align-items:center; gap:6px; padding:4px 7px; border-radius:9px; background:#2b1913aa; color:#f9dfad; font:900 16px 'Outfit'; }
+  .mobile-header-player.is-you { background:#ffdc78; color:#432410; }
+  .mobile-header-player svg, .mobile-header-player img { width:24px; height:24px; border-radius:50%; object-fit:cover; }
+  .remaining-widget { display:none !important; }
+  .top-right-hud { width:100%; justify-content:flex-end; }
+  .hud-widget-box.menu-btn { min-height:32px; height:32px; padding:4px 11px; font-size:10px; border-radius:10px; opacity:.96; pointer-events:auto; }
+  .scoreboard-footer { top:calc(max(6px, env(safe-area-inset-top)) + 40px); bottom:auto; left:9px; right:9px; z-index:19; }
+  .scoreboard-grid { grid-template-columns:repeat(4,minmax(0,1fr)); gap:4px; }
+  .player-card { height:43px; min-width:0; padding:3px 3px; gap:3px; display:grid; grid-template-columns:20px minmax(0,1fr); border-radius:9px; }
+  .player-avatar-ring { width:20px; height:20px; grid-row:1 / 3; }
+  .player-info { min-width:0; }
+  .player-name { font-size:10px; }
+  .player-name-row { gap:0; }
+  .player-score-box { width:auto; justify-content:flex-start; }
+  .player-score { font-size:14px; }
+  .player-trait,.score-pts,.rank-pill,.you-badge { display:none; }
+  .contextual-hud-container { bottom:calc(var(--touch-bottom) + 160px); width:calc(100% - 24px); gap:6px; }
+  .hud-floating-panel { display:none; }
+  .lokma-meter-compact { width:240px; padding:6px 10px; gap:5px; }
+  .meter-status { display:none; }
+  .hud-feedback-toast { font-size:11px; padding:6px 10px; }
+  .touch-controls { display:flex; position:absolute; z-index:12; bottom:var(--touch-bottom); left:max(10px,env(safe-area-inset-left)); right:max(10px,env(safe-area-inset-right)); justify-content:space-between; align-items:end; direction:ltr; touch-action:none; user-select:none; -webkit-user-select:none; }
+  .touch-hint { position:absolute; bottom:100%; left:0; right:0; margin:0 0 8px; text-align:center; color:var(--ui-cream); font-size:12px; text-shadow:0 2px 3px #281510; }
+  .touch-wheel { position:relative; width:154px; height:154px; border-radius:50%; background:radial-gradient(circle,#543321 0 34%,#2b1710 35% 47%,#7f5535 48% 53%,#2a160e 54%); border:3px solid #c89550; box-shadow:0 7px 0 #281510, inset 0 0 0 5px #412516; }
+  .wheel-rim { position:absolute; inset:13px; border:9px solid #d4a75e; border-left-color:#704524; border-right-color:#704524; border-radius:50%; transform:rotate(-22deg); }
+  .wheel-hub { position:absolute; inset:58px; display:grid; place-items:center; color:#ffdb78; font-size:18px; z-index:1; }
+  .touch-wheel .touch-key { position:absolute; z-index:2; width:44px; height:44px; border-radius:50%; background:#704735dd; border-color:#d4a75e; box-shadow:0 3px 0 #281510; }
+  .touch-wheel .touch-ArrowUp { top:7px; left:52px; }
+  .touch-wheel .touch-ArrowLeft { top:53px; left:6px; }
+  .touch-wheel .touch-ArrowDown { bottom:7px; left:52px; }
+  .touch-wheel .touch-ArrowRight { top:53px; right:6px; }
+  .touch-actions { display:flex; flex-direction:column; gap:8px; }
+  .touch-key { touch-action:none; -webkit-touch-callout:none; border:2px solid #bb8b5f; border-radius:14px; background:linear-gradient(#704735,#46271e); color:var(--ui-cream); box-shadow:0 4px 0 #281510; font:900 24px 'Nunito','Changa',sans-serif; padding:0; }
+  .touch-actions .touch-key { min-width:92px; min-height:48px; font-size:16px; background:linear-gradient(#ffe592,#f3ac2f); color:#432410; }
+  .touch-key:active { transform:translateY(3px); box-shadow:0 1px 0 #281510; }
+  .touch-key:disabled { opacity:.4; }
+  .touch-key:focus-visible { outline:3px solid white; outline-offset:3px; }
+  .lobby-control-note,.lobby-step-keys { display:none; }
+  .lobby-steps { gap:10px; }
+  .lobby-step { display:grid; grid-template-columns:86px 1fr; gap:10px; align-items:center; padding:8px; }
+  .lobby-step-photo { width:86px; height:86px; object-fit:cover; }
+  .lobby-step-copy h3 { font-size:17px; margin-bottom:3px; }
+  .lobby-step-copy p { font-size:11px; line-height:1.4; }
+}
+@media (max-height:500px) and (orientation:landscape) and (pointer:coarse) {
+  .game .game-scene { top:0; height:100% !important; }
+  .scoreboard-footer { top:12px; left:22%; right:22%; }
+  .remaining-widget .widget-label { display:none; }
+  .contextual-hud-container { bottom:20px; width:250px; }
+  .touch-hint { font-size:11px; }
+}

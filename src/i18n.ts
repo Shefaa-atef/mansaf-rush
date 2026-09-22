@@ -57,8 +57,8 @@ export const TRANSLATIONS = {
         },
         {
           title: 'Roll',
-          desc: 'Hold SPACE again and keep tapping the left and right arrows to roll the rice into a circle. A bigger scoop takes more rolls. Stop while it is green, or it gets squashed.',
-          label: 'Roll the rice into a ball with SPACE and the left and right arrows',
+          desc: 'Alternate the left and right arrows — ← then → then ← — to roll the rice into a circle, no need to hold SPACE. A bigger scoop takes more rolls. Stop while it is green, or it gets squashed.',
+          label: 'Roll the rice into a ball with the left and right arrows',
         },
         {
           title: 'Eat',
@@ -90,7 +90,7 @@ export const TRANSLATIONS = {
       card2Title: '2. Scoop',
       card2Desc: 'Hold SPACE over rice and steer with the arrows. Let go when you have enough. Lamb and almonds are worth bonus points.',
       card3Title: '3. Roll into a Circle',
-      card3Desc: 'Hold SPACE again and keep tapping ← & →. A bigger scoop takes more rolls. Stop while the gauge is GREEN, or it gets squashed!',
+      card3Desc: 'Alternate ← & → to roll — no need to hold SPACE. A bigger scoop takes more rolls. Stop while the gauge is GREEN, or it gets squashed!',
       card4Title: '4. Eat & Score',
       card4Desc: 'Press Up Arrow (↑) to bring the round Lokma to your mouth and eat!',
       gotIt: 'Got it!',
@@ -107,6 +107,7 @@ export const TRANSLATIONS = {
       pts: 'PTS',
       playAgain: 'Play Again ↻',
       tryAgain: 'Try Again ↻',
+      backToLobby: '🏠 Main Menu',
     },
 
     scoreboard: {
@@ -133,7 +134,7 @@ export const TRANSLATIONS = {
       zoneRound: 'ROUND',
       zoneSquashed: 'SQUASHED',
       rollProgress: (rolls: number, target: number) =>
-        `Roll into a circle: ${rolls}/${target} (SPACE + ← / →)`,
+        `Roll into a circle: ${rolls}/${target} (← / →)`,
       perfectRound: 'Round! Stop rolling and press ↑',
       squashed: 'Squashed! Press ↑',
     },
@@ -146,7 +147,7 @@ export const TRANSLATIONS = {
       enough: '🎯 ENOUGH RICE! LET GO OF SPACE!',
       scooping: 'SCOOPING... HOLD SPACE FOR MORE RICE',
       defaultGuide: 'Use ARROWS to move · Hold SPACE to scoop rice',
-      shapingHold: (rolls: number, target: number) => `HOLD SPACE + ← / → TO ROLL (${rolls}/${target})`,
+      shapingHold: (rolls: number, target: number) => `ALTERNATE ← / → TO ROLL (${rolls}/${target})`,
     },
 
     feedback: {
@@ -157,10 +158,11 @@ export const TRANSLATIONS = {
       roundLokma: 'Round lokma! Press ↑ to eat. Too much rolling squashes it.',
       overRolled: 'Too much rolling: it is getting squashed!',
       almostSquashed: 'Careful! One more roll squashes it.',
-      rollHint: (rolls: number, target: number) => `Hold SPACE + Left / Right to roll (${rolls}/${target})`,
-      finishRolling: 'Finish rolling with SPACE + Left / Right, then press Up to eat.',
+      rollHint: (rolls: number, target: number) => `Alternate ← / → to roll (${rolls}/${target})`,
+      finishRolling: 'Finish rolling by alternating ← / →, then press Up to eat.',
       smallScoop: 'Not enough rice! Keep holding SPACE to scoop more.',
-      scooped: (rolls: number) => `Scooped! Hold SPACE again and tap ← / → ${rolls} times to roll it into a circle.`,
+      scooped: (rolls: number) => `Scooped! Alternate ← / → ${rolls} times to roll it into a circle.`,
+      alternateHint: 'Switch sides! ← then → then ← again to roll it.',
     },
 
     // Table-talk bubbles above the bots' heads. Lines are dealt from a shuffled
@@ -261,8 +263,8 @@ export const TRANSLATIONS = {
         },
         {
           title: 'دحبر',
-          desc: 'دوس المسافة مرة ثانية وضلّك دوس السهم اليمين واليسار لتدحبر اللقمة دايرة. كل ما كان الرز أكتر بدها دحبرة أكتر. وقّف وهي بالأخضر، وإذا زوّدتها بتنعجن.',
-          label: 'دحبر لقمة الرز بالمسافة والسهمين اليمين واليسار',
+          desc: 'بدّل بين السهم اليمين واليسار — يمين وبعدين يسار وهيك بالتبادل — لتدحبر اللقمة دايرة، بلا ما تحتاج تدوس المسافة. كل ما كان الرز أكتر بدها دحبرة أكتر. وقّف وهي بالأخضر، وإذا زوّدتها بتنعجن.',
+          label: 'دحبر لقمة الرز بالسهمين اليمين واليسار',
         },
         {
           title: 'القم',
@@ -294,7 +296,7 @@ export const TRANSLATIONS = {
       card2Title: '٢. جمّع',
       card2Desc: 'دوس المسافة فوق الرز وحرّك بالأسهم وجمّع كفّ. لمّا يصير كفاية فلّت المسافة. اللحمة واللوز إلهم نقاط زيادة.',
       card3Title: '٣. دحبر',
-      card3Desc: 'دوس المسافة مرة ثانية وضلّك دوس ← و →. الرز الأكتر بدو دحبرة أكتر. وقّف وهي بالأخضر، وإذا زوّدتها بتنعجن!',
+      card3Desc: 'بدّل ← و → عشان تدحبر، بلا ما تحتاج تدوس المسافة. الرز الأكتر بدو دحبرة أكتر. وقّف وهي بالأخضر، وإذا زوّدتها بتنعجن!',
       card4Title: '٤. كُل واجمع نقاط',
       card4Desc: 'دوس السهم لفوق (↑) عشان ترفع اللقمة لتمّك وتاكلها!',
       gotIt: 'تمام!',
@@ -311,6 +313,7 @@ export const TRANSLATIONS = {
       pts: 'نقطة',
       playAgain: 'العب كمان مرة ↻',
       tryAgain: 'جرّب كمان مرة ↻',
+      backToLobby: '🏠 ارجع عالبداية',
     },
 
     scoreboard: {
@@ -337,7 +340,7 @@ export const TRANSLATIONS = {
       zoneRound: 'دايرة',
       zoneSquashed: 'معجونة',
       rollProgress: (rolls: number, target: number) =>
-        `دحبر اللقمة دايرة: ${rolls}/${target} (المسافة + ← / →)`,
+        `دحبر اللقمة دايرة: ${rolls}/${target} (← / →)`,
       perfectRound: 'دايرة تمام! بلاش تدحبر أكتر، دوس ↑',
       squashed: 'انعجنت! دوس ↑',
     },
@@ -350,7 +353,7 @@ export const TRANSLATIONS = {
       enough: '🎯 الرز كفاية! فلّت المسافة!',
       scooping: 'عم تجمّع... ضلّك دايس عالمسافة لزيادة الرز',
       defaultGuide: 'حرّك بالأسهم · دوس المسافة عشان تجمّع رز',
-      shapingHold: (rolls: number, target: number) => `دوس المسافة + ← / → عشان تدحبر (${rolls}/${target})`,
+      shapingHold: (rolls: number, target: number) => `بدّل ← / → عشان تدحبر (${rolls}/${target})`,
     },
 
     feedback: {
@@ -361,10 +364,11 @@ export const TRANSLATIONS = {
       roundLokma: 'صارت دايرة! دوس ↑ وكُل، وإذا زوّدتها بتنعجن.',
       overRolled: 'زوّدتها! عم تنعجن!',
       almostSquashed: 'انتبه! لو دحبرت مرة كمان بتنعجن.',
-      rollHint: (rolls: number, target: number) => `دوس المسافة + ← / → عشان تدحبر (${rolls}/${target})`,
-      finishRolling: 'كمّل دحبر بالمسافة + ← / →، وبعدين دوس ↑ عشان تاكل.',
+      rollHint: (rolls: number, target: number) => `بدّل ← / → عشان تدحبر (${rolls}/${target})`,
+      finishRolling: 'كمّل بدّل ← / →، وبعدين دوس ↑ عشان تاكل.',
       smallScoop: 'الرز قليل! ضلّك دايس عالمسافة عشان تجمّع أكتر.',
-      scooped: (rolls: number) => `جمّعت الرز! دوس المسافة مرة ثانية و ← / → ${rolls} ${rolls <= 10 ? 'مرات' : 'مرة'} عشان تدحبره دايرة.`,
+      scooped: (rolls: number) => `جمّعت الرز! بدّل ← / → ${rolls} ${rolls <= 10 ? 'مرات' : 'مرة'} عشان تدحبره دايرة.`,
+      alternateHint: 'بدّل! دوس ← وبعدين → وهيك بالتبادل عشان تدحبرها.',
     },
 
     opponent: {

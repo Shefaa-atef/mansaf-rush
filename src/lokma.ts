@@ -5,7 +5,7 @@ import { type Lang, TRANSLATIONS } from './i18n.ts';
 //   Scoop  hold SPACE over rice and steer with the arrows; the palm fills. No gauge, only "enough or
 //          not yet". Let go of SPACE to lock the scoop. The arrows never roll while scooping, so
 //          steering across the rice cannot start (or ruin) the roll by accident.
-//   Roll   hold SPACE again, and every left or right arrow rolls the rice rounder. The gauge shows how
+//   Roll   every left or right arrow rolls the rice rounder, no SPACE needed. The gauge shows how
 //          round the circle is: yellow is still loose, green is a proper circle, red is over-rolled
 //          (squashed).
 //   Eat    press up to take the bite once it is round.
@@ -158,11 +158,16 @@ export function lockScoop(l: Lokma) {
 }
 
 /**
- * One roll (needs SPACE held). It pushes the gauge on. The circle is ready after targetRolls, and
- * rolling on after that is allowed: it walks the needle through green into red and squashes the bite.
+ * One roll (a tap of ← or →, no SPACE needed). Like really rolling a ball of rice between two
+ * palms, each tap has to be the opposite side of the last one: ← then → then ← again. The same
+ * arrow twice in a row does nothing, so the first tap after a scoop can be either arrow, but every
+ * one after that must switch. It pushes the gauge on. The circle is ready after targetRolls, and
+ * rolling on after that is allowed: it walks the needle through green into red and squashes the
+ * bite.
  */
 export function performRoll(l: Lokma, dir: 'left' | 'right', now = performance.now()): boolean {
-  if (!l.space || l.eating || !(l.shaping || l.readyToEat) || l.rolls >= maxRolls(l.targetRolls)) return false;
+  if (l.eating || !(l.shaping || l.readyToEat) || l.rolls >= maxRolls(l.targetRolls)) return false;
+  if (l.last === dir) return false; // same side twice running: no progress until the other arrow
   const currentAngle = riceRollingMotion(l, now).angle;
 
   l.rolls += 1;

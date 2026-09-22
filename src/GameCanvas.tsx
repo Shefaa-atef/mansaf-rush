@@ -28,6 +28,7 @@ function Scene({
   onEat: (now: number) => void;
   lang: Lang;
 }) {
+  const mobileViewport = typeof window !== 'undefined' && window.innerWidth <= 700;
   return (
     <>
       <color attach="background" args={['#b08162']} />
@@ -48,11 +49,11 @@ function Scene({
       <directionalLight position={[1, 3, 5]} intensity={0.42} color="#fff2da" />
       <directionalLight position={[-1.5, 2.4, -4.5]} intensity={0.55} color="#ffcf9e" />
       <RoomReflections />
-      <Majlis refined={refinedLook} />
+      <Majlis refined={refinedLook && !mobileViewport} />
       {refinedLook && <VisualPolish />}
-      <Character id={1} position={[-2.02, 0.02, -0.3]} angle={0.78} game={game} />
-      <Character id={2} position={[0, 0.02, -2.05]} angle={0} game={game} />
-      <Character id={3} position={[2.02, 0.02, -0.3]} angle={-0.78} game={game} />
+      <Character id={1} position={[mobileViewport ? -1.82 : -2.02, 0.02, mobileViewport ? -1.1 : -0.3]} angle={0.78} game={game} />
+      <Character id={2} position={[0, 0.02, mobileViewport ? -1.75 : -2.05]} angle={0} game={game} />
+      <Character id={3} position={[mobileViewport ? 1.82 : 2.02, 0.02, mobileViewport ? -1.1 : -0.3]} angle={-0.78} game={game} />
       {refinedLook && <OpponentEffects game={game} lang={lang} />}
       <MansafPlatter remaining={remaining} refined={refinedLook} />
       <PlayerHand game={game} onEat={onEat} lang={lang} />
@@ -62,6 +63,26 @@ function Scene({
 
 // Resolutions to fall back through, sharpest first. The canvas starts at its normal 1.5x to 2x.
 const DPR_STEPS = [2, 1.5, 1.25, 1];
+
+// Preserve the horizontal view of every seat when the viewport becomes narrow.
+function ResponsiveCamera() {
+  const { camera, size } = useThree();
+  useEffect(() => {
+    if (!('fov' in camera)) return;
+    const perspective = camera as import('three').PerspectiveCamera;
+    const base = refinedLook ? 38 : 36;
+    const aspect = size.width / Math.max(1, size.height);
+    const mobileViewport = window.innerWidth <= 700;
+    // Mobile uses a tighter portrait crop: the platter and front seats are the game,
+    // while the rear majlis can fall outside the frame.
+    perspective.position.z = mobileViewport ? 3.75 : (refinedLook ? 5.75 : 5.2);
+    perspective.position.y = mobileViewport ? 3.45 : (refinedLook ? 3.65 : 3.75);
+    if (mobileViewport) perspective.lookAt(0, 0.95, -0.05);
+    perspective.fov = Math.max(base, 2 * Math.atan(Math.tan(27 * Math.PI / 180) / aspect) * 180 / Math.PI);
+    perspective.updateProjectionMatrix();
+  }, [camera, size.width, size.height]);
+  return null;
+}
 
 /**
  * Trades resolution for frame rate on slow machines, and only ever steps down. While a round is
@@ -103,6 +124,7 @@ export const GameCanvas = memo(function GameCanvas({ game, remaining, onEat, lan
 }) {
   return (
     <Canvas
+      className="game-scene"
       shadows
       camera={{ position: refinedLook ? [0, 3.65, 5.75] : [0, 3.75, 5.2], fov: refinedLook ? 38 : 36 }}
       onCreated={({ camera }) => camera.lookAt(0, refinedLook ? .67 : .95, -0.05)}
@@ -115,6 +137,7 @@ export const GameCanvas = memo(function GameCanvas({ game, remaining, onEat, lan
     >
       <Scene game={game} remaining={remaining} onEat={onEat} lang={lang} />
       <AdaptiveResolution active={phase === 'playing'} />
+      <ResponsiveCamera />
     </Canvas>
   );
 });

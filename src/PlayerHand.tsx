@@ -46,8 +46,8 @@ export function PlayerHand({
 
   const p = useMemo(
     () => ({
-      target: new THREE.Vector3(0.55 + ARM_RIGHT_SHIFT, 1.2, 1.2),
-      hand: new THREE.Vector3(0.55 + ARM_RIGHT_SHIFT, 1.2, 1.2),
+      target: new THREE.Vector3(0.55 + ARM_RIGHT_SHIFT, 1.2, window.innerWidth <= 700 ? 2.4 : 1.2),
+      hand: new THREE.Vector3(0.55 + ARM_RIGHT_SHIFT, 1.2, window.innerWidth <= 700 ? 2.4 : 1.2),
       previous: new THREE.Vector3(),
       from: new THREE.Vector3(),
       mouth: new THREE.Vector3(),
@@ -93,25 +93,32 @@ export function PlayerHand({
           l.gathering = true;
         }
       } else if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
-        // While SPACE is held to scoop, ← / → only steer the hand across the rice. They roll only
-        // once the scoop is locked (SPACE let go) and SPACE is held again. Starting the roll from a
-        // steering tap made people roll, and squash the lokma, before they knew it had begun.
-        if (l.space && !l.eating && (l.shaping || l.readyToEat)) {
-          const before = l.meterZone, wasReady = l.readyToEat;
-          if (performRoll(l, e.code === 'ArrowLeft' ? 'left' : 'right', now)) {
-            const fb = TRANSLATIONS[langRef.current].feedback;
-            if (l.meterZone === 'squashed') {
-              g.feedback = fb.overRolled;
-              if (before !== 'squashed') playSquashed();
-            } else if (!wasReady && l.readyToEat) {
-              g.feedback = fb.roundLokma;
-              playRoundLokma();
-            } else if (nextRollSquashes(l)) {
-              g.feedback = fb.almostSquashed;
-            } else {
-              g.feedback = l.readyToEat ? fb.roundLokma : fb.rollHint(l.rolls, l.targetRolls);
-            }
+        // While SPACE is held to scoop, ← / → only steer the hand across the rice. They roll once
+        // the scoop is locked (SPACE let go) — a tap alone rolls it, no need to hold SPACE again.
+        if (!l.eating && (l.shaping || l.readyToEat)) {
+          const dir = e.code === 'ArrowLeft' ? 'left' : 'right';
+          const fb = TRANSLATIONS[langRef.current].feedback;
+          if (l.last === dir) {
+            // Rolling rice needs the other hand's push next, like the real motion: the same side
+            // twice in a row does not move the count on, so say why instead of staying silent.
+            g.feedback = fb.alternateHint;
             g.feedbackAt = now;
+          } else {
+            const before = l.meterZone, wasReady = l.readyToEat;
+            if (performRoll(l, dir, now)) {
+              if (l.meterZone === 'squashed') {
+                g.feedback = fb.overRolled;
+                if (before !== 'squashed') playSquashed();
+              } else if (!wasReady && l.readyToEat) {
+                g.feedback = fb.roundLokma;
+                playRoundLokma();
+              } else if (nextRollSquashes(l)) {
+                g.feedback = fb.almostSquashed;
+              } else {
+                g.feedback = l.readyToEat ? fb.roundLokma : fb.rollHint(l.rolls, l.targetRolls);
+              }
+              g.feedbackAt = now;
+            }
           }
         }
       } else if (e.code === 'ArrowUp') {
@@ -184,7 +191,11 @@ export function PlayerHand({
     }
 
     // Fixed to the camera's bottom center, including during reaching and eating.
-    p.shoulder.set(ARM_RIGHT_SHIFT, -1.2, -3).applyQuaternion(camera.quaternion).add(camera.position);
+    const mobileViewport = window.innerWidth <= 700;
+    p.shoulder
+      .set(mobileViewport ? 0.55 + ARM_RIGHT_SHIFT : ARM_RIGHT_SHIFT, -1.2, -3)
+      .applyQuaternion(camera.quaternion)
+      .add(camera.position);
     p.previous.copy(p.hand);
 
     // Keyboard-based movement of hand position (Arrow Keys / WASD)
@@ -208,11 +219,14 @@ export function PlayerHand({
         p.target.x += p.velocity.x * dt;
         p.target.z += p.velocity.y * dt;
 
-        // Clamp inside platter radius (~1.8)
+        // The portrait camera brings the near seats closer to the visible play area;
+        // give touch players enough reach to cover the whole platter and those seats.
+        const mobileViewport = window.innerWidth <= 700;
+        const movementRadius = mobileViewport ? 2.6 : 1.8;
         const radius = Math.hypot(p.target.x, p.target.z);
-        if (radius > 1.8) {
-          p.target.x = (p.target.x / radius) * 1.8;
-          p.target.z = (p.target.z / radius) * 1.8;
+        if (radius > movementRadius) {
+          p.target.x = (p.target.x / radius) * movementRadius;
+          p.target.z = (p.target.z / radius) * movementRadius;
         }
       }
 
@@ -371,14 +385,16 @@ export function PlayerHand({
   }, -0.5);
 
   return (
-    <group name="keyboard-controlled-hand">
-      <BlenderPlayerArm
-        motion={motion}
-        hand={hand}
-        shoulder={p.shoulder}
-        elbow={p.elbow}
-        game={game}
-      />
+    <group name="keyboard-controlled-hand" position={window.innerWidth <= 700 ? [0.22, -0.18, 0.28] : [0, 0, 0]}>
+      <group>
+        <BlenderPlayerArm
+          motion={motion}
+          hand={hand}
+          shoulder={p.shoulder}
+          elbow={p.elbow}
+          game={game}
+        />
+      </group>
       <group ref={hand} scale={1.2}>
         <HandFood game={game} />
       </group>

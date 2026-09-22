@@ -7,7 +7,7 @@ import {
   MIN_SCOOP, MAX_SCOOP, SCOOP_PER_SECOND, GREEN_ROLLS, GREEN_FROM, RED_FROM,
 } from '../src/lokma.ts';
 
-/** A lokma whose scoop is done and whose roll is about to start, with SPACE held. */
+/** A lokma whose scoop is done and whose roll is about to start. */
 function readyToRoll(amount = 4) {
   const l = { ...freshLokma(), gathering: true, space: true, amount, since: 1000 };
   lockScoop(l);
@@ -172,15 +172,39 @@ test('an eat press once the roll has stopped starts at once, and one on a loose 
   assert.ok(l.eating > 0);
 });
 
-test('rolling needs SPACE held and a scoop to roll', () => {
+test('rolling needs a locked scoop, but not SPACE held', () => {
   const l = readyToRoll();
   l.space = false;
-  assert.equal(performRoll(l, 'left', 2000), false);
-  assert.equal(l.rolls, 0);
+  assert.equal(performRoll(l, 'left', 2000), true, 'a tap rolls it even with SPACE not held');
+  assert.equal(l.rolls, 1);
 
   const gathering = { ...freshLokma(), gathering: true, space: true, amount: 4 };
   assert.equal(performRoll(gathering, 'left', 2000), false, 'still scooping: the arrows steer instead');
   assert.equal(gathering.rolls, 0);
+});
+
+test('rolling must alternate arrows: the same side twice in a row does nothing', () => {
+  const l = readyToRoll();
+  assert.equal(performRoll(l, 'left', 1000), true, 'the first tap can be either side');
+  assert.equal(l.rolls, 1);
+  assert.equal(performRoll(l, 'left', 1100), false, 'left again does not roll it further');
+  assert.equal(l.rolls, 1, 'a repeated side makes no progress');
+  assert.equal(performRoll(l, 'right', 1200), true, 'switching sides rolls it');
+  assert.equal(l.rolls, 2);
+  assert.equal(performRoll(l, 'right', 1300), false, 'right again does not roll it further');
+  assert.equal(l.rolls, 2);
+  assert.equal(performRoll(l, 'left', 1400), true, 'back to the other side works again');
+  assert.equal(l.rolls, 3);
+});
+
+test('the alternation check only looks at this lokma\'s own last roll', () => {
+  // freshLokma() always starts with last: '', so in real play a new bite is never blocked by
+  // whatever side the previous lokma's last roll happened to be. This pins that behaviour
+  // directly on the field the check reads, independent of how a lokma normally gets built.
+  const l = readyToRoll();
+  l.last = 'right';
+  assert.equal(performRoll(l, 'right', 1000), false, 'still blocked while last says right');
+  assert.equal(performRoll(l, 'left', 1000), true, 'switching away from whatever last holds works');
 });
 
 test('only a formed circle can be eaten, and not while the last roll is still turning', () => {
@@ -190,7 +214,7 @@ test('only a formed circle can be eaten, and not while the last roll is still tu
   const lastButOne = 1200 + (rolls - 2) * 700;
   assert.equal(beginEating(l, lastButOne + 700), false, 'one roll short is still loose');
   const last = lastButOne + 700;
-  performRoll(l, 'left', last);
+  performRoll(l, (rolls - 1) % 2 ? 'right' : 'left', last); // alternating: opposite of the loop's last tap
   assert.equal(l.readyToEat, true);
   assert.equal(beginEating(l, last + 100), false, 'the last roll is still animating');
   assert.equal(beginEating(l, last + 700), true);

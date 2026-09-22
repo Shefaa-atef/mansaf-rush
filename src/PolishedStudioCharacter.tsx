@@ -230,7 +230,9 @@ export function PolishedStudioCharacter({ id, game, fallback, onChew, onUnlock }
     const blinkT = (now / 1000 + id * 1.17) % (4.2 + id * .37), blink = blinkT < .16 ? Math.sin(blinkT / .16 * Math.PI) : 0;
     for (const eye of r.eyes) eye.morphTargetInfluences![eye.morphTargetDictionary!.BLINK] = Math.max(blink,refinedLook ? focus*(id===3 ? .34 : .20) : 0);
     if (food.current) {
-      food.current.visible = active && t >= .58 && t < .94;
+      // Hidden on phone-sized screens: this bite-food ball is tuned for the desktop hand/camera
+      // and reads wrong (too small, wrong spot) at the closer mobile camera distance.
+      food.current.visible = window.innerWidth > 700 && active && t >= .58 && t < .94;
       p.point.copy(p.foodOffset); r.right.hand.localToWorld(p.point); food.current.position.copy(p.point);
       food.current.quaternion.copy(p.handQ); food.current.scale.setScalar(.85 + .15 * ease((t - .43) / .15));
     }

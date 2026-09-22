@@ -926,9 +926,12 @@ canvas {
 
 .results-actions {
   display: flex;
+  flex-direction: column;
   justify-content: center;
+  gap: 12px;
 }
-.results-actions .primary-btn {
+.results-actions .primary-btn,
+.results-actions .secondary-btn {
   width: 100%;
 }
 
