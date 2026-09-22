@@ -1,0 +1,145 @@
+/* The match uses the same wood, gold and cream as the illustrated lobby. */
+.game {
+  --ui-ink:#281510;
+  --ui-wood:#573122;
+  --ui-gold:#ffcf55;
+  --ui-cream:#fff1ce;
+  --ui-muted:#d6b99b;
+  --ui-green:#bfe079;
+  --ui-red:#e96b43;
+}
+.hud-widget-box,.hud-widget-box.menu-btn {
+  background:linear-gradient(#704735,#46271e); border:2px solid #bb8b5f;
+  border-radius:16px; box-shadow:inset 0 2px 0 #ffffff1c,0 5px 0 #281510;
+  color:var(--ui-cream);
+}
+.hud-widget-box.menu-btn:hover { background:#805039; color:var(--ui-gold); }
+.widget-label { color:var(--ui-muted); }
+.widget-value { color:var(--ui-gold); text-shadow:0 2px 0 var(--ui-ink); }
+.widget-bar-track { background:#281510; border:1px solid #976640; border-radius:8px; height:9px; }
+.widget-bar-fill { background:linear-gradient(#ffe599,#f3ac2f); border-radius:8px; }
+.player-card { background:linear-gradient(#65422e,#402319); border:2px solid #bb8b5f; border-bottom:4px solid var(--player-color); border-radius:17px; box-shadow:0 5px 0 #281510,inset 0 2px 0 #ffffff12; }
+.player-card.is-you { background:linear-gradient(#fff1ce,#f6d798); border-color:#7f491e; border-bottom-color:#dfa038; box-shadow:0 5px 0 #48250f,inset 0 2px 0 #fff8e6; }
+.player-card.is-leader { border-color:#e8b95c; }
+.player-avatar-ring { border:2px solid #edbe68; border-radius:50%; background:#9a6c45; box-shadow:0 3px 0 #281510; }
+.player-name,.player-score { color:var(--ui-cream); }
+.player-trait,.score-pts { color:var(--ui-muted); }
+.is-you .player-name,.is-you .player-score { color:#432410; }
+.is-you .player-trait,.is-you .score-pts { color:#765037; }
+.you-badge { background:#754221; border:0; color:#fff1ce; border-radius:5px; }
+.rank-pill,.rank-pill.gold-rank { background:var(--ui-cream); color:#573122; border:2px solid #573122; box-shadow:0 2px 0 #281510; border-radius:8px; }
+.rank-pill.gold-rank { background:var(--ui-gold); }
+.score-pop-anim { color:#ffdc77; text-shadow:0 2px 0 #281510,1px 0 0 #281510; }
+.hud-floating-panel { background:linear-gradient(#65422e,#402319); border:2px solid #bb8b5f; border-radius:16px; box-shadow:0 5px 0 #281510,inset 0 2px 0 #ffffff12; }
+.hud-floating-panel.is-target-hit { border-color:var(--ui-green); background:linear-gradient(#40502a,#2f361c); box-shadow:0 5px 0 #1e2413; }
+.hud-label-primary,.hud-label-sub { color:var(--ui-cream); }
+.hud-label-action { color:var(--ui-gold); }
+.hud-dot-sep { color:#c2a079; }
+.key-cap { background:linear-gradient(#fffae9,#f2ddb4); color:#573122; border:1px solid #a87e4f; border-bottom:4px solid #b58a53; border-radius:7px; box-shadow:0 2px 0 #281510; }
+.release-target-badge { background:#bfe079; color:#293715; border:1px solid #d6edaa; border-radius:8px; text-shadow:none; }
+.hud-feedback-toast { background:#fff1ce; color:#573122; border:2px solid #956036; border-radius:12px; box-shadow:0 4px 0 #281510; }
+.lokma-meter-compact { background:linear-gradient(#65422e,#402319); border:2px solid #bb8b5f; border-radius:14px; padding:12px 16px; box-shadow:0 5px 0 #281510; }
+.lokma-meter-compact.is-perfect { border-color:#bfe079; box-shadow:0 5px 0 #281510,0 0 16px #bfe07933; }
+.meter-bar-track { border:2px solid #281510; border-radius:9px; background:#281510; box-shadow:inset 0 2px 3px #0004; }
+.meter-bar-track .zone-under { background:#ffcf55; }
+.meter-bar-track .zone-green { background:#bfe079; }
+.meter-bar-track .zone-over { background:#e96b43; }
+.meter-needle { background:#fff9e9; border:1px solid #573122; box-shadow:0 1px 4px #281510; }
+.meter-status .badge-hold,.meter-status .badge-under { color:#fff1ce; }
+.meter-status .badge-release,.meter-status .badge-perfect { color:#bfe079; }
+.meter-status .badge-warning { color:#ffb697; }
+/* The gauge measures the roll: each zone is named under the bar, and the needle slides between rolls. */
+.meter-needle { transition:left .22s cubic-bezier(.2,.8,.2,1); }
+.meter-zone-labels { display:flex; font:800 10px/1 'Changa',sans-serif; }
+.meter-zone-labels span { text-align:center; white-space:nowrap; }
+.meter-zone-labels .label-under { color:#ffcf55; }
+.meter-zone-labels .label-green { color:#bfe079; }
+.meter-zone-labels .label-over { color:#ff9a78; }
+.lokma-meter-compact.is-squashed { border-color:#e96b43; box-shadow:0 5px 0 #281510,0 0 16px #e96b4344; }
+/* The HUD panels stay left to right so the key caps match the keyboard. Arabic sentences inside them
+   still have to lay out right to left, or arrows, emoji and punctuation land on the wrong side. */
+[dir="rtl"] .hud-feedback-toast,
+[dir="rtl"] .meter-status span,
+[dir="rtl"] .release-target-badge,
+[dir="rtl"] .hud-label-primary,
+[dir="rtl"] .hud-label-sub,
+[dir="rtl"] .hud-label-action { unicode-bidi:plaintext; }
+/* "Hold [SPACE] to scoop" has to read right to left around its key cap. */
+[dir="rtl"] .hud-hold-row { direction:rtl; }
+.overlay { background:#21120dd1; backdrop-filter:blur(7px); }
+.modal {
+  background:radial-gradient(ellipse at top,#815037 0%,#573122 50%,#3b2119 100%);
+  border:3px solid #d4a66b; border-radius:26px;
+  box-shadow:inset 0 3px 0 #ffffff24,0 9px 0 #281510,0 13px 0 #a47041,0 25px 65px #0008;
+  color:var(--ui-cream);
+}
+.modal::before { content:none; }
+.modal h2 { color:var(--ui-gold); text-shadow:0 3px 0 #281510; }
+.modal .eyebrow { color:#e7c398; font-size:10px; letter-spacing:2px; }
+.overlay .primary-btn,.overlay .secondary-btn,.overlay .danger-btn {
+  min-height:50px; border:2px solid #573122; border-radius:14px;
+  box-shadow:inset 0 2px 0 #ffffff70,0 5px 0 #281510;
+  font:900 16px 'Nunito','Changa',sans-serif;
+}
+.overlay .primary-btn { background:linear-gradient(#ffe592,#ffc84b 60%,#f3ac2f); color:#432410; }
+.overlay .secondary-btn { background:linear-gradient(#fff7e0,#eed2a3); color:#573122; }
+.overlay .danger-btn { background:linear-gradient(#fba680,#e96b43); color:#432410; }
+.overlay .primary-btn:hover,.overlay .secondary-btn:hover,.overlay .danger-btn:hover { transform:translateY(-2px); filter:brightness(1.07); border-color:#573122; }
+.overlay .primary-btn:active,.overlay .secondary-btn:active,.overlay .danger-btn:active { transform:translateY(3px); box-shadow:inset 0 2px 0 #ffffff40,0 2px 0 #281510; }
+.pause-logo { display:block; width:135px; height:115px; object-fit:contain; margin:-8px auto 12px; filter:drop-shadow(0 5px 0 #28151066); }
+.menu-modal-layout { padding:26px 32px 32px; }
+.menu-modal-layout h2 { margin:7px 0 24px; }
+.menu-action-stack { gap:14px; }
+.close-btn { background:linear-gradient(#fff1ce,#edcb94); color:#573122; border:2px solid #573122; border-radius:10px; box-shadow:0 3px 0 #281510; }
+.guide-modal-layout { width:min(970px,100%); padding:28px 30px; }
+.match-guide-steps { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; margin:0 0 26px; padding:0; list-style:none; text-align:start; }
+.match-guide-card { border:2px solid #382017; border-radius:17px; background:var(--ui-cream); padding:5px; box-shadow:0 5px 0 #281510; overflow:hidden; }
+.match-guide-card>img { display:block; width:100%; height:auto; aspect-ratio:1; border-radius:11px; }
+.match-guide-card>div { padding:12px 10px; }
+.match-guide-card h3 { display:flex; align-items:center; gap:9px; margin:0 0 8px; color:#432410; font:900 23px/1.3 'Outfit','Changa',sans-serif; }
+.match-guide-card h3>span { display:grid; place-items:center; width:26px; height:26px; flex-shrink:0; background:#ffcf55; border-radius:7px; font:900 16px 'Outfit',sans-serif; }
+.match-guide-card:nth-child(2) h3>span { background:#bfe079; }
+.match-guide-card:nth-child(3) h3>span { background:#e96b43; }
+.match-guide-card p { color:#65422e; font:800 13px/1.65 'Nunito','Changa',sans-serif; margin:0; }
+.guide-close-btn { margin-top:0; }
+/* Results: the win / lose illustration sits beside the leaderboard, so each score appears only once. */
+.results-modal-layout { width:min(840px,100%); padding:22px; display:grid; grid-template-columns:minmax(0,380px) minmax(0,1fr); gap:26px; align-items:center; }
+.result-art { position:relative; aspect-ratio:1; background:#3b2119; border:3px solid #573122; border-radius:20px; box-shadow:0 5px 0 #281510; overflow:hidden; animation:resultArtIn .5s cubic-bezier(.2,.9,.3,1.25) both; }
+.result-art-img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 38%; }
+.results-modal-layout.is-win .result-art { border-color:#ffcf55; box-shadow:0 5px 0 #281510,0 0 30px #ffcf5566; }
+.result-body { min-width:0; }
+@keyframes resultArtIn { from { opacity:0; transform:scale(.93) rotate(-2deg); } to { opacity:1; transform:none; } }
+@media(max-width:860px) {
+  .results-modal-layout { width:min(460px,100%); grid-template-columns:1fr; gap:16px; }
+  .result-art { aspect-ratio:auto; height:clamp(150px,26dvh,230px); }
+}
+.results-modal-layout.is-win h2,.results-modal-layout.is-lose h2 { color:#ffcf55; }
+.result-subline { color:#eed2b4; font-size:13px; line-height:1.6; }
+.rank-row { background:#47291f; border:1px solid #926646; border-radius:12px; }
+.rank-row.top-rank { background:#724827; border-color:#d5a35b; }
+.rank-num { color:#ffcf55; }
+.rank-name { color:#fff1ce; }
+.rank-trait { color:#d6b99b; }
+.rank-score { color:#ffcf55; }
+.rank-img { border-color:#c39357; }
+@media(max-height:760px) and (min-width:601px) {
+  .pause-logo { width:108px; height:85px; margin-bottom:6px; }
+  .menu-modal-layout { padding-top:22px; padding-bottom:26px; }
+  .results-modal-layout h2 { font-size:32px; }
+}
+@media(max-width:600px) {
+  .player-card { border-radius:12px; }
+  .player-avatar-ring { width:28px; height:28px; }
+  .player-score { font-size:25px; }
+  .modal { border-radius:20px; }
+  .menu-modal-layout,.results-modal-layout { padding:24px 20px; }
+  .pause-logo { width:110px; height:92px; }
+  .guide-modal-layout { padding:26px 18px; }
+  .match-guide-steps { grid-template-columns:1fr; gap:16px; }
+  .match-guide-card>img { max-height:260px; object-fit:contain; background:#e4bd83; }
+  .match-guide-card h3 { font-size:24px; }
+  .match-guide-card p { font-size:13px; }
+  .rank-row { gap:9px; }
+  .rank-score { font-size:13px; }
+  .lokma-meter-compact { max-width:100%; padding:10px 12px; }
+}

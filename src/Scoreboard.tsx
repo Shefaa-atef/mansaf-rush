@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Portrait } from './Portrait';
 import { type Lang, TRANSLATIONS } from './i18n';
+import { formatNumber, roundTo2 } from './formatNumber';
 
 type FloatingScore = {
   id: number;
@@ -48,7 +49,7 @@ export function Scoreboard({
 
   // Compute live rank
   const rankings = names
-    .map((_, id) => ({ id, score: scores[id] }))
+    .map((_, id) => ({ id, score: roundTo2(scores[id]) }))
     .sort((a, b) => b.score - a.score);
   const rankMap = new Map(rankings.map((r, index) => [r.id, index + 1]));
 
@@ -69,18 +70,18 @@ export function Scoreboard({
             >
               {/* Rank Pill Badge */}
               <div className={`rank-pill ${isLeader ? 'gold-rank' : ''}`}>
-                {isLeader ? (lang === 'ar' ? '👑 #١' : '👑 #1') : (lang === 'ar' ? `#${rank}` : `#${rank}`)}
+                {isLeader ? `👑 #${rank}` : `#${rank}`}
               </div>
 
               {/* Floating +N score popups */}
               {playerFloats.map((f) => (
                 <div key={f.id} className="score-pop-anim">
-                  +{f.diff}
+                  +{formatNumber(f.diff)}
                 </div>
               ))}
 
               <div className="player-avatar-ring">
-                <Portrait id={i} />
+                <Portrait id={i} name={name} />
               </div>
 
               <div className="player-info">
@@ -92,7 +93,7 @@ export function Scoreboard({
               </div>
 
               <div className="player-score-box">
-                <strong className="player-score">{scores[i]}</strong>
+                <strong className="player-score">{formatNumber(scores[i])}</strong>
                 <span className="score-pts">{t.pts}</span>
               </div>
             </div>

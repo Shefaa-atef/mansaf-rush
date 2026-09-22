@@ -16,6 +16,7 @@ export function createSleeveDeformer(rest: Float32Array) {
   const side = new THREE.Vector3(), normal = new THREE.Vector3(), vertex = new THREE.Vector3();
   const rotation = new THREE.Quaternion(), transport = new THREE.Quaternion(), scale = new THREE.Vector3();
   const frame = new THREE.Quaternion();
+  let ticks = 0;
   return (geometry: THREE.BufferGeometry, hand: THREE.Object3D, _elbow: THREE.Vector3, shoulder: THREE.Vector3, _heightAt: (x: number, z: number) => number) => {
     hand.updateWorldMatrix(true, false);
     hand.getWorldQuaternion(rotation); hand.getWorldScale(scale);
@@ -46,6 +47,7 @@ export function createSleeveDeformer(rest: Float32Array) {
       }
     }
     positions.needsUpdate = true;
-    geometry.computeVertexNormals();
+    // Shading normals change too little between two frames to see; every other frame is enough.
+    if ((ticks++ & 1) === 0) geometry.computeVertexNormals();
   };
 }

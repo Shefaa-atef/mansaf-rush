@@ -128,6 +128,24 @@ export function playToggle(on: boolean) {
   }
 }
 
+/** A bright two-note chime: the lokma just became a round circle, so stop rolling. */
+export function playRoundLokma() {
+  unlockAudio();
+  if (muted || !ctx) return;
+  const t = ctx.currentTime;
+  tone(660, t, 0.09, 0.05, 'triangle');
+  tone(990, t + 0.08, 0.18, 0.055, 'triangle');
+}
+
+/** A soft low thud: the lokma was rolled too long and got squashed. */
+export function playSquashed() {
+  unlockAudio();
+  if (muted || !ctx) return;
+  const t = ctx.currentTime;
+  tone(220, t, 0.16, 0.06, 'sine', 110);
+  noiseBurst(t, 0.09, 0.05, 300);
+}
+
 /** Reset whoosh for restarting/replaying a round. */
 export function playRestart() {
   unlockAudio();
@@ -177,22 +195,34 @@ export function playLose() {
 // Recorded voice lines + quiet restaurant ambience.
 //
 // These are real actor lines (not synthesized) layered on top of the
-// oscillator sfx above: a pre-round greeting, every character's "bismillah"
-// as the round kicks off, an in-game gathering tip, and a loss taunt. All of
-// it respects the same mute flag as the rest of this module.
+// oscillator sfx above. Which one plays when:
+//
+//   site opens ............ Zaid "we're inviting you" or Sami "we're cooking
+//                           mansaf" (one of the two, at random)
+//   round starts .......... Zaid, Omar and Sami say "bismillah" together
+//                           (omar-say-bismillah.mp3 is deliberately not used)
+//   a while into the round  Zaid or Sami: "gather it, roll it, take a bite"
+//   the player wins ....... one of the old bot taunts (Omar, Sami or Zaid)
+//   the player loses ...... Sami: "that's not how Jordanian mansaf is eaten"
+//
+// The restaurant ambience runs underneath all of it for the whole visit. All
+// of it respects the same mute flag as the rest of this module.
 // ---------------------------------------------------------------------------
-import ambientUrl from './assets/sounds/ambient-restaurant.mp3';
+// A 2-minute seamless loop (was a 63-minute, 54 MB file); see tools/optimize-assets.mjs.
+import ambientUrl from './assets/web/ambient-restaurant-loop.mp3';
 import eatBiteUrl from './assets/sounds/eat-bite.mp3';
 import omarBismillahUrl from './assets/sounds/omar-bismillah.mp3';
 import omarLoseTauntUrl from './assets/sounds/omar-lose-taunt.mp3';
 import zaidBismillahUrl from './assets/sounds/zaid-bismillah.mp3';
 import zaidGatherTipUrl from './assets/sounds/zaid-gather-tip.mp3';
-
+import zaidInviteLunchUrl from './assets/sounds/zaid-invite-lunch.mp3';
 import zaidLoseShawarmaUrl from './assets/sounds/zaid-lose-shawarma.mp3';
 import samiBismillahUrl from './assets/sounds/sami-bismillah.mp3';
 import samiCookingMansafUrl from './assets/sounds/sami-cooking-mansaf.mp3';
 import samiGatherTipUrl from './assets/sounds/sami-gather-tip.mp3';
 import samiLoseTauntUrl from './assets/sounds/sami-lose-taunt.mp3';
+import samiNotHowYouEatUrl from './assets/sounds/sami-not-how-you-eat.mp3';
+import { playWhenAllowed } from './autoplayGate';
 
 const VOICE_VOLUME = 0.9;
 // Deliberately subtle — this is background restaurant hum, not a soundtrack.
@@ -250,8 +280,10 @@ function stopAllVoices() {
   refreshDucking();
 }
 
-/** Starts one clip, tracking it in `activeVoices` for ducking/ended cleanup. */
-function trackVoice(el: HTMLAudioElement) {
+/** Starts one clip, tracking it in `activeVoices` for ducking/ended cleanup.
+ *  Resolves once it is playing and rejects if the browser refused (which the
+ *  welcome uses to wait for a first gesture; see autoplayGate.ts). */
+function trackVoice(el: HTMLAudioElement): Promise<void> {
   activeVoices.add(el);
   refreshDucking();
   const done = () => {
@@ -260,19 +292,21 @@ function trackVoice(el: HTMLAudioElement) {
   };
   el.addEventListener('ended', done);
   el.addEventListener('error', done);
-  void el.play().catch(done);
+  const started = el.play();
+  started.catch(done); // this also counts as handling the rejection for callers that ignore it
+  return started;
 }
 
 /** Plays one recorded voice line, cutting off whichever one(s) are already playing. */
-function playVoice(url: string) {
-  if (muted) return;
+function playVoice(url: string): Promise<void> {
+  if (muted) return Promise.resolve();
   try {
     stopAllVoices();
     const el = new Audio(url);
     el.volume = VOICE_VOLUME;
-    trackVoice(el);
+    return trackVoice(el);
   } catch {
-    /* Audio is optional. */
+    return Promise.resolve(); /* Audio is optional. */
   }
 }
 
@@ -285,32 +319,51 @@ function playVoicesTogether(urls: string[]) {
     try {
       const el = new Audio(url);
       el.volume = VOICE_VOLUME;
-      trackVoice(el);
+      void trackVoice(el);
     } catch {
       /* Audio is optional. */
     }
   }
 }
 
-/** Sami welcomes the player with the mansaf cooking line on entering the guide. */
-export function playPreGameGreeting() {
-  playVoice(samiCookingMansafUrl);
+let welcomeSettled = false; // played, or no longer wanted because a round began
+let cancelWelcome: (() => void) | undefined;
+
+/** The site has just opened: Zaid says "we're inviting you" or Sami says
+ *  "we're cooking mansaf". Browsers block sound until the first click or key
+ *  press, so on a first visit this waits for one. It only ever happens once,
+ *  and never after a round has begun. */
+export function playWelcome() {
+  if (welcomeSettled) return;
+  welcomeSettled = true;
+  const url = pick([zaidInviteLunchUrl, samiCookingMansafUrl]);
+  cancelWelcome = playWhenAllowed(() => playVoice(url));
 }
 
 /** Every character says "bismillah" together, in sync, as the round starts. */
 export function playBismillah() {
+  // A greeting still waiting for its first gesture (that click may be the one
+  // starting the round) is pointless now.
+  welcomeSettled = true;
+  cancelWelcome?.();
   playVoicesTogether([zaidBismillahUrl, omarBismillahUrl, samiBismillahUrl]);
 }
 
-/** "Gather it, roll it, take a bite" — an in-game tip, played once the first
- *  time the player actually starts gathering rice during real play. */
+/** "Gather it, roll it, take a bite" — Zaid or Sami reminds the player how to
+ *  eat, a while into the round (the delay lives with the game loop in main.tsx). */
 export function playGatherTip() {
-  playVoice(pick([zaidGatherTipUrl, samiGatherTipUrl]));
+  void playVoice(pick([zaidGatherTipUrl, samiGatherTipUrl]));
 }
 
-/** A taunt from whoever's needling you after a loss. */
+/** The player won: one of the bots answers with the taunt clips that used to be
+ *  loss-only. The files keep their old "lose" names. */
+export function playWinVoice() {
+  void playVoice(pick([omarLoseTauntUrl, samiLoseTauntUrl, zaidLoseShawarmaUrl]));
+}
+
+/** The player lost: Sami says "that's not how Jordanian mansaf is eaten". */
 export function playLoseVoice() {
-  playVoice(pick([omarLoseTauntUrl, samiLoseTauntUrl, zaidLoseShawarmaUrl]));
+  void playVoice(samiNotHowYouEatUrl);
 }
 
 function fadeAmbientLevelTo(target: number, ms: number, onDone?: () => void) {
@@ -332,19 +385,22 @@ function fadeAmbientLevelTo(target: number, ms: number, onDone?: () => void) {
   }, stepMs);
 }
 
-/** Starts (or resumes) the very quiet restaurant ambience loop. Idempotent —
- *  safe to call on every round start. */
+let cancelAmbientRetry: (() => void) | undefined;
+
+/** Starts (or resumes) the very quiet restaurant ambience loop. It then plays
+ *  for the whole visit: lobby, round and results. Idempotent, so it is safe to
+ *  call on every round start. Muting only silences it (see applyAmbientVolume),
+ *  which means unmuting brings it back even if it began while muted. If the
+ *  browser blocks sound until the first click or key press, it begins there. */
 export function startAmbient() {
-  if (muted) return;
   if (!ambientEl) {
     ambientEl = new Audio(ambientUrl);
     ambientEl.loop = true;
   }
+  const el = ambientEl;
   applyAmbientVolume();
-  void ambientEl.play().catch(() => {
-    /* Blocked until a user gesture arrives; harmless to skip. */
-  });
-  fadeAmbientLevelTo(1, 1500);
+  cancelAmbientRetry?.();
+  cancelAmbientRetry = playWhenAllowed(() => el.play().then(() => fadeAmbientLevelTo(1, 1500)));
 }
 
 /** Fades the ambience out and pauses it. */

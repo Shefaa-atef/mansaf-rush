@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, type RefObject } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { createGLTFLoader } from './gltf';
 import type { HandMotion } from './handPoses';
 import type { Game } from './main';
 import { foodObstacleHeight } from './MansafPlatter';
 import { createSleeveDeformer } from './sleeveDeformation';
+import { markPartReady } from './sceneReadiness';
 
 /** The entire first-person arm is authored in Blender; only its pose is updated here. */
 export function BlenderPlayerArm({ motion, hand, shoulder, elbow, game }: {
@@ -34,7 +35,7 @@ export function BlenderPlayerArm({ motion, hand, shoulder, elbow, game }: {
         material.dispose();
       }
     });
-    new GLTFLoader().load(new URL('./assets/mansaf-player-arm-v6.glb', import.meta.url).href, gltf => {
+    createGLTFLoader().load(new URL('./assets/web/mansaf-player-arm-v6.glb', import.meta.url).href, gltf => {
       if (cancelled) { dispose(gltf.scene); return; }
       asset = gltf.scene;
       const parts: THREE.Mesh[] = [];
@@ -87,7 +88,8 @@ export function BlenderPlayerArm({ motion, hand, shoulder, elbow, game }: {
         }
       }
       hand.current?.add(attachment);
-    }, undefined, error => console.error('Could not load Blender player arm', error));
+      markPartReady(0);
+    }, undefined, error => { console.error('Could not load Blender player arm', error); markPartReady(0); });
     return () => {
       cancelled = true;
       attachment.removeFromParent(); dispose(attachment);

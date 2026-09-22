@@ -1,17 +1,19 @@
+import { limitWristBend } from './characterWrist';
 import { refineCharacterFace } from './characterFaces';
 import { refineCharacterBody } from './characterBody';
 import { refineSamiHair } from './characterHair';
 import { refineCharacterNose } from './characterNoses';
 import { refineCharacterEye } from './characterEyes';
 import { extendArmForReach } from './characterArmProportions';
-import { botBiteWrist } from './botBiteMotion';
+import { botBiteWrist, BOT_SCOOP_SINK } from './botBiteMotion';
 import { CharacterHands } from './CharacterHands';
 import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { createGLTFLoader } from './gltf';
 import { botSeats } from './platterFood';
-import { foodSurface, foodObstacleHeight } from './MansafPlatter';
+import { foodSurface, foodObstacleHeight, foodTopBound } from './MansafPlatter';
+import { contactLift } from './handContact';
 import type { Game } from './main';
 import { ChibiFeet } from './ChibiFeet';
 const refinedLook = new URLSearchParams(window.location.search).get('look') !== 'before';
@@ -56,7 +58,7 @@ export function PolishedBlenderCharacter({ id, game, fallback, onChew, onUnlock 
             }
         } }); geometries.forEach(g => g.dispose()); materials.forEach(m => m.dispose()); textures.forEach(t => t.dispose()); };
         window.addEventListener('pointerdown', onUnlock);
-        new GLTFLoader().load([new URL('./assets/zaid-chibi-polished.glb', import.meta.url).href, new URL('./assets/omar-chibi-polished.glb', import.meta.url).href, new URL('./assets/sami-chibi-polished.glb', import.meta.url).href][id - 1], gltf => {
+        createGLTFLoader().load([new URL('./assets/web/zaid-chibi-polished.glb', import.meta.url).href, new URL('./assets/web/omar-chibi-polished.glb', import.meta.url).href, new URL('./assets/web/sami-chibi-polished.glb', import.meta.url).href][id - 1], gltf => {
             if (cancelled) {
                 dispose(gltf.scene);
                 return;
@@ -201,22 +203,28 @@ export function PolishedBlenderCharacter({ id, game, fallback, onChew, onUnlock 
                 onChew();
             }
         }
+        // Zaid cups the lokma with the fingers raised .35 rad. These two are leaned
+        // forward by the asset's own tilt, so add it back or their fingers sit flatter
+        // and the wrist ends up buried in the head instead of under the chin.
+        const feedPitch = .35 + asset.rotation.x;
         const aim = (bone: THREE.Bone, from: THREE.Vector3, to: THREE.Vector3) => { bone.getWorldQuaternion(p.worldQ); p.axis.set(0, 1, 0).applyQuaternion(p.worldQ); p.direction.subVectors(to, from).normalize(); p.q.setFromUnitVectors(p.axis, p.direction).multiply(p.worldQ); bone.parent!.getWorldQuaternion(p.parentQ); bone.quaternion.copy(p.parentQ.invert().multiply(p.q)); bone.updateWorldMatrix(false, true); };
         asset.localToWorld(p.goal);
         if (active) {
             const flip = THREE.MathUtils.smootherstep(t, refinedLook ? .42 : .48, refinedLook ? .55 : .82) * (1 - THREE.MathUtils.smootherstep(t, .95, 1.05));
             asset.getWorldQuaternion(p.worldQ);
-            p.curlQ.setFromAxisAngle(p.axis.set(1, 0, 0), Math.PI / 2 - flip * .35);
+            p.curlQ.setFromAxisAngle(p.axis.set(1, 0, 0), Math.PI / 2 - flip * feedPitch);
             const facing = p.worldQ.clone().multiply(p.curlQ);
             p.curlQ.setFromAxisAngle(p.axis.set(0, 1, 0), flip * Math.PI);
             facing.multiply(p.curlQ);
             const mouth = new THREE.Vector3(0, 1.72, .46);
             asset.localToWorld(mouth);
             const idle = p.idle.clone(); asset.localToWorld(idle);
-            botBiteWrist(t, new THREE.Vector3(...g.biteTargets[id]), mouth, idle, facing, p.goal);
+            botBiteWrist(t, new THREE.Vector3(...g.biteTargets[id]), mouth, idle, facing, p.goal, BOT_SCOOP_SINK);
         }
         // Check the deformed fingers, not only the wrist, against the food surface.
-        for (let pass = 0; pass < 3; pass++) {
+        const foodAt = (x: number, z: number) => foodObstacleHeight(x, z, g.remaining);
+        const handMeshes = r.handMeshes.map(original => (asset.getObjectByName('PlayerStyleHand_R') as THREE.Mesh | undefined) ?? original);
+        for (let pass = 0; pass < 8; pass++) {
             r.upper.getWorldPosition(p.shoulder);
             p.direction.subVectors(p.goal, p.shoulder);
             const { a: upperLength, b: foreLength } = extendArmForReach(r.fore, r.hand, r.a, r.b, p.direction.length(), active);
@@ -235,20 +243,18 @@ export function PolishedBlenderCharacter({ id, game, fallback, onChew, onUnlock 
             // flip to cup upward toward the mouth (a short window, not a slow continuous roll).
             const flip = active ? THREE.MathUtils.smootherstep(t, refinedLook ? .42 : .48, refinedLook ? .55 : .82) * (1 - THREE.MathUtils.smootherstep(t, .95, 1.05)) : 0;
             asset.getWorldQuaternion(p.worldQ);
-            p.curlQ.setFromAxisAngle(p.axis.set(1, 0, 0), Math.PI / 2 - flip * .35);
+            p.curlQ.setFromAxisAngle(p.axis.set(1, 0, 0), Math.PI / 2 - flip * feedPitch);
             p.q.copy(p.worldQ).multiply(p.curlQ);
             p.curlQ.setFromAxisAngle(p.axis.set(0, 1, 0), flip * Math.PI);
             p.q.multiply(p.curlQ);
-            // Retain the palm's scoop/roll, but limit wrist flex relative to
-            // the forearm. A world-fixed palm otherwise folds sharply at the cuff.
-            p.sample.set(0, 1, 0).applyQuaternion(p.q).normalize();
-            p.direction.subVectors(p.wrist, p.elbow).normalize();
-            const wristBend = p.sample.angleTo(p.direction);
-            const relaxedBend = Math.PI / 15;
-            if (wristBend > relaxedBend) {
-                p.curlQ.setFromUnitVectors(p.sample, p.direction);
-                p.curlQ.slerp(new THREE.Quaternion(), relaxedBend / wristBend);
-                p.q.premultiply(p.curlQ);
+            // Keep a gentle wrist throughout scooping, rolling and eating.
+            limitWristBend(p.q, p.elbow, p.wrist);
+            // Re-solve the wrist behind the same rice/mouth contact after
+            // limiting its angle; otherwise the rotated palm enters the head.
+            if (active && pass < 7) {
+                const mouth = new THREE.Vector3(0, 1.72, .46); asset.localToWorld(mouth);
+                const idle = p.idle.clone(); asset.localToWorld(idle);
+                botBiteWrist(t, new THREE.Vector3(...g.biteTargets[id]), mouth, idle, p.q, p.goal, BOT_SCOOP_SINK);
             }
             r.hand.parent!.getWorldQuaternion(p.parentQ);
             r.hand.quaternion.copy(p.parentQ.invert().multiply(p.q));
@@ -256,18 +262,11 @@ export function PolishedBlenderCharacter({ id, game, fallback, onChew, onUnlock 
                 p.curlQ.setFromAxisAngle(p.axis.set(1, 0, 0), curl);
                 finger.quaternion.copy(r.rest.get(finger)!).multiply(p.curlQ);
             }
-            asset.updateMatrixWorld(true);
+            // Only this arm moved since the last pass, so only it needs its matrices refreshed.
+            r.upper.updateWorldMatrix(false, true);
             let clearance = 0;
-            for (const original of r.handMeshes) {
-                const mesh = (asset.getObjectByName('PlayerStyleHand_R') as THREE.Mesh | undefined) ?? original;
-                if (mesh instanceof THREE.SkinnedMesh) mesh.skeleton.update();
-                for (let i = 0; i < mesh.geometry.attributes.position.count; i += 24) {
-                    mesh.getVertexPosition(i, p.sample);
-                    mesh.localToWorld(p.sample);
-                    clearance = Math.max(clearance, foodObstacleHeight(p.sample.x, p.sample.z, g.remaining) + .015 - p.sample.y);
-                }
-            }
-            if (clearance < .003)
+            for (const mesh of handMeshes) clearance = Math.max(clearance, contactLift(mesh, 24, .015, foodAt, foodTopBound));
+            if (clearance < .003 && (!active || pass >= 7))
                 break;
             p.goal.y += Math.min(clearance, .35);
         }
@@ -305,7 +304,7 @@ export function PolishedBlenderCharacter({ id, game, fallback, onChew, onUnlock 
             p.goal.set(refinedLook ? .55 : .55, refinedLook ? .45 : .43, refinedLook ? .15 : .04);
             asset.localToWorld(p.goal);
             // Rest near the tray's edge, nudged slightly toward Sami's side.
-            if (refinedLook && id === 3) p.goal.set(2.08, .16, -.45);
+            if (refinedLook && id === 3) p.goal.set(botSeats[2][0] - .35, .16, botSeats[2][1] + .55);
             p.direction.subVectors(p.goal, p.shoulder);
             const restLengths = extendArmForReach(leftFore, leftHand, r.a, r.b, p.direction.length(), refinedLook && id === 3);
             const d = THREE.MathUtils.clamp(p.direction.length(), Math.abs(restLengths.a - restLengths.b) + .001, restLengths.a + restLengths.b - .001);
@@ -351,3 +350,4 @@ export function PolishedBlenderCharacter({ id, game, fallback, onChew, onUnlock 
         return <>{fallback}</>;
     return <group name={`character-${id}-blender`}><primitive object={asset}/>{refinedLook&&<ChibiFeet id={id}/>}<CharacterHands scene={asset} id={id} game={game}/><group ref={food} visible={false}><mesh scale={[.085, .065, .085]}><icosahedronGeometry args={[1, 2]}/><meshStandardMaterial color="#eac45e" roughness={.9}/></mesh>{Array.from({ length: 20 }, (_, i) => <mesh key={i} position={[Math.sin(i * 2.4) * .075, Math.sin(i * 1.7) * .05, Math.cos(i * 2.4) * .075]} scale={[.016, .012, .023]}><sphereGeometry args={[1, 6, 4]}/><meshStandardMaterial color="#edcb66"/></mesh>)}</group></group>;
 }
+

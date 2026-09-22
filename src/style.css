@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Changa:wght@700;800;900&family=Nunito:wght@700;800;900&family=Outfit:wght@800;900&display=swap');
 
 :root {
   font-family: 'Changa', 'Nunito', sans-serif;
@@ -136,7 +135,7 @@ canvas {
 }
 
 /* ==========================================================================
-   TOP HEADER HUD (Logo Left, Mansaf % + Menu Button Right)
+   TOP HEADER HUD (Mansaf % Left, Menu Button Right)
    ========================================================================== */
 .game-hud-header {
   position: absolute;
@@ -148,25 +147,6 @@ canvas {
   align-items: center;
   pointer-events: none;
   z-index: 10;
-}
-
-.hud-logo-stamp {
-  pointer-events: auto;
-  display: flex;
-  align-items: center;
-  transition: transform 0.2s ease;
-}
-.hud-logo-stamp:hover {
-  transform: scale(1.04);
-}
-.hud-logo-img {
-  /* Fluid, but capped well below the old 112px so it reads as a mark,
-     not a banner competing with the HUD widgets next to it. */
-  height: clamp(46px, 6.2vw, 68px);
-  width: auto;
-  max-width: 220px;
-  object-fit: contain;
-  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.75)) drop-shadow(0 2px 5px rgba(0, 0, 0, 0.5));
 }
 
 .top-right-hud {
@@ -186,6 +166,7 @@ canvas {
 }
 
 .hud-widget-box.remaining-widget {
+  pointer-events: auto;
   width: clamp(120px, 15vw, 156px);
   padding: 6px 12px;
   display: flex;
@@ -851,36 +832,6 @@ canvas {
   text-align: center;
 }
 
-.result-badge-icon {
-  width: 64px;
-  height: 64px;
-  margin: 0 auto 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32px;
-  border-radius: 50%;
-  background: rgba(245, 214, 118, 0.12);
-  border: 1.5px solid rgba(245, 214, 118, 0.35);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  position: relative;
-  z-index: 1;
-}
-.results-modal-layout.is-win .result-badge-icon {
-  background: rgba(245, 214, 118, 0.22);
-  border-color: #f5d676;
-  box-shadow: 0 0 24px rgba(245, 214, 118, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
-  animation: winBadgePulse 1.4s ease-in-out infinite;
-}
-@keyframes winBadgePulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.08); }
-}
-.results-modal-layout.is-lose .result-badge-icon {
-  background: rgba(184, 169, 148, 0.12);
-  border-color: rgba(184, 169, 148, 0.4);
-}
-
 .results-modal-layout.is-win h2 {
   color: #f5d676;
   text-shadow: 0 0 20px rgba(245, 214, 118, 0.6), 0 2px 4px rgba(0, 0, 0, 0.5);
@@ -922,61 +873,6 @@ canvas {
   position: relative;
   z-index: 1;
 }
-.results-modal-layout.is-win .winner-spotlight-card {
-  border-color: rgba(245, 214, 118, 0.7);
-  box-shadow: 0 0 26px rgba(245, 214, 118, 0.4);
-}
-.winner-spotlight-card {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  background: rgba(245, 214, 118, 0.12);
-  border: 1.5px solid rgba(245, 214, 118, 0.45);
-  border-radius: 16px;
-  padding: 16px 20px;
-  margin: 18px 0;
-  text-align: left;
-}
-.winner-crown-badge {
-  position: absolute;
-  top: -12px;
-  right: 16px;
-  font: 900 11px 'Changa';
-  letter-spacing: 0.5px;
-  background: #f5d676;
-  color: #271b12;
-  padding: 3px 10px;
-  border-radius: 6px;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
-}
-.winner-avatar-img {
-  width: 68px;
-  height: 68px;
-  border-radius: 50%;
-  border: 2.5px solid #f5d676;
-  object-fit: cover;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-}
-.winner-details {
-  flex: 1;
-}
-.winner-details h3 {
-  font: 900 20px 'Changa';
-  margin: 0 0 4px;
-  color: #fff8ee;
-}
-.winner-trait-badge {
-  display: inline-block;
-  font: 700 12px 'Nunito';
-  color: #b8a994;
-  margin-bottom: 4px;
-}
-.winner-score-tag {
-  font: 900 16px 'Changa';
-  color: #f5d676;
-}
-
 .leaderboard-list {
   display: flex;
   flex-direction: column;
@@ -1053,8 +949,8 @@ canvas {
 
 /* Responsive Overrides */
 @media (max-width: 700px) {
-  /* .game-hud-header and .hud-logo-img already scale fluidly via clamp()
-     above; these just tighten the two widgets a bit further for phones. */
+  /* .game-hud-header already scales fluidly via clamp() above; these
+     just tighten the two widgets a bit further for phones. */
   .hud-widget-box.remaining-widget {
     width: 112px;
     padding: 5px 9px;
@@ -1120,15 +1016,6 @@ canvas {
   right: auto;
 }
 
-[dir="rtl"] .winner-spotlight-card {
-  text-align: right;
-}
-
-[dir="rtl"] .winner-crown-badge {
-  left: 16px;
-  right: auto;
-}
-
 [dir="rtl"] .rank-info {
   text-align: right;
 }
@@ -1183,5 +1070,4 @@ canvas {
   border-width: 2px;
   border-color: #f5d676;
 }
-.hud-logo-stamp { filter: drop-shadow(0 5px 16px rgba(0,0,0,.35)); }
 .game-hud-header { padding: 3px 4px; }

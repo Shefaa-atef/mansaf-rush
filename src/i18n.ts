@@ -1,9 +1,42 @@
 export type Lang = 'en' | 'ar';
 
+/** Keeps a figure like "+13" reading left to right inside Arabic text, where a bare plus sign drifts to the wrong side of the number. */
+export const isolateLtr = (text: string) => `\u2066${text}\u2069`;
+
 export const TRANSLATIONS = {
   en: {
     names: ['You', 'Zaid', 'Omar', 'Sami'],
     traits: ['Your Seat', 'Quick Bites', 'Steady Eater', 'Big Appetite'],
+
+    meta: {
+      title: 'Mansaf Rush — A seat at the platter',
+    },
+
+    // Keyboard key labels drawn on the on-screen key caps.
+    keys: {
+      space: 'SPACE',
+    },
+
+    // Text read out by screen readers only.
+    a11y: {
+      openMenu: 'Open Menu',
+      closeGuide: 'Close guide',
+    },
+
+    lobby: {
+      ariaLabel: 'Mansaf Rush',
+      edition: 'DINNER IS ON!',
+      soundOn: 'Sound: on',
+      soundOff: 'Sound: off',
+      tagline: 'One platter. Four appetites. Can you beat the boys?',
+      start: 'LET’S EAT!',
+      keyboardNote: 'KEYBOARD REQUIRED',
+      rivalsHeading: 'THE BOYS ARE READY',
+      guideHeading: 'MAKE EVERY BITE COUNT',
+      guideSubtitle: 'Three moves. One perfect lokma.',
+      footerTagline: 'ONE PLATTER. FOUR APPETITES.',
+      brand: 'MANSAF RUSH',
+    },
 
     header: {
       remaining: 'Mansaf Left',
@@ -19,12 +52,12 @@ export const TRANSLATIONS = {
       steps: [
         {
           title: 'Scoop',
-          desc: 'Move over the rice with the arrow keys. Hold SPACE to scoop until the gauge turns green.',
+          desc: 'Move over the rice with the arrow keys and hold SPACE to scoop. Let go of SPACE when you have enough. Catch lamb or an almond for bonus points.',
           label: 'Scoop rice from the platter using the arrow keys and SPACE',
         },
         {
           title: 'Roll',
-          desc: 'Keep holding SPACE and alternate the left and right arrows to shape a round lokma.',
+          desc: 'Hold SPACE again and keep tapping the left and right arrows to roll the rice into a circle. A bigger scoop takes more rolls. Stop while it is green, or it gets squashed.',
           label: 'Roll the rice into a ball with SPACE and the left and right arrows',
         },
         {
@@ -54,10 +87,10 @@ export const TRANSLATIONS = {
       title: 'How to Play',
       card1Title: '1. Move Hand',
       card1Desc: 'Use Arrow Keys (← → ↑ ↓) to move over rice on the platter.',
-      card2Title: '2. Scoop & Fill',
-      card2Desc: 'Hold SPACE over rice to fill the gauge until it turns GREEN.',
-      card3Title: '3. Roll into Circle',
-      card3Desc: 'Press ← & → with SPACE to squeeze and roll into a round circle!',
+      card2Title: '2. Scoop',
+      card2Desc: 'Hold SPACE over rice and steer with the arrows. Let go when you have enough. Lamb and almonds are worth bonus points.',
+      card3Title: '3. Roll into a Circle',
+      card3Desc: 'Hold SPACE again and keep tapping ← & →. A bigger scoop takes more rolls. Stop while the gauge is GREEN, or it gets squashed!',
       card4Title: '4. Eat & Score',
       card4Desc: 'Press Up Arrow (↑) to bring the round Lokma to your mouth and eat!',
       gotIt: 'Got it!',
@@ -71,7 +104,6 @@ export const TRANSLATIONS = {
       winSubline: 'You cleaned the platter better than anyone at the majlis!',
       loseSubline: (winnerName: string, rank: number) =>
         `${winnerName} finished first — you placed #${rank}.`,
-      winnerBadge: '👑 WINNER',
       pts: 'PTS',
       playAgain: 'Play Again ↻',
       tryAgain: 'Try Again ↻',
@@ -86,49 +118,132 @@ export const TRANSLATIONS = {
       eating: 'Eating Lokma...',
       lokmaReadyBadge: '🎯 LOKMA READY!',
       eatAction: 'Eat',
-      rollProgress: (rolls: number, target: number) => `Roll into Circle (${rolls}/${target})`,
-      greenZoneBadge: '🎯 GREEN ZONE! HOLD SPACE + ← / → TO ROLL',
+      rollProgress: (rolls: number, target: number) => `Roll into a circle (${rolls}/${target})`,
+      enoughBadge: '🎯 ENOUGH RICE! LET GO OF SPACE',
+      dry: 'No rice under your hand. Slide to the rice!',
       hold: 'Hold',
-      untilGreen: 'Until Green',
+      toScoop: 'to Scoop',
       move: 'Move',
       scoop: 'Scoop',
     },
 
+    // The gauge belongs to the roll: yellow is still loose, green is a round circle, red is squashed.
     meter: {
-      holdToRoll: 'HOLD SPACE + ← / → TO ROLL',
-      tooMuchRoll: 'Too Much! SPACE + ← / → to Roll',
-      gatheringRice: 'Gathering Rice...',
+      zoneLoose: 'LOOSE',
+      zoneRound: 'ROUND',
+      zoneSquashed: 'SQUASHED',
       rollProgress: (rolls: number, target: number) =>
-        `Roll into Circle: ${rolls}/${target} (SPACE + ← / →)`,
-      perfectRound: 'Perfect Round Lokma! Press ↑',
-      squashed: 'Squashed Lokma! Press ↑',
-      underfilled: 'Underfilled Lokma! Press ↑',
+        `Roll into a circle: ${rolls}/${target} (SPACE + ← / →)`,
+      perfectRound: 'Round! Stop rolling and press ↑',
+      squashed: 'Squashed! Press ↑',
     },
 
     lokmaLabels: {
       tooLoose: 'Oops! Lokma too loose!',
       delicious: 'Eating delicious Lokma!',
       roundReady: '🎯 ROUND LOKMA READY! Press ↑ to Eat!',
-      perfectHold: '🎯 PERFECT! KEEP SPACE HELD + ← / → TO ROLL!',
-      tooMuchHold: '⚠️ TOO MUCH! SPACE + ← / → TO ROLL!',
-      gatheringHold: 'GATHERING RICE... HOLD SPACE UNTIL GREEN!',
-      defaultGuide: 'Use ARROWS to move · Hold SPACE to gather rice',
+      squashed: '💥 SQUASHED! Press ↑ to Eat',
+      enough: '🎯 ENOUGH RICE! LET GO OF SPACE!',
+      scooping: 'SCOOPING... HOLD SPACE FOR MORE RICE',
+      defaultGuide: 'Use ARROWS to move · Hold SPACE to scoop rice',
+      shapingHold: (rolls: number, target: number) => `HOLD SPACE + ← / → TO ROLL (${rolls}/${target})`,
     },
 
     feedback: {
       perfect: '✨ Perfect Lokma!',
       squashed: '💥 Squashed!',
-      sahtein: 'Sahtein!',
-      lambBonus: ' · Lamb Bonus',
+      lamb: (pts: number) => ` · 🥩 Lamb ${isolateLtr(`+${pts}`)}`,
+      almond: (pts: number) => ` · 🥜 Almond ${isolateLtr(`+${pts}`)}`,
+      roundLokma: 'Round lokma! Press ↑ to eat. Too much rolling squashes it.',
+      overRolled: 'Too much rolling: it is getting squashed!',
+      almostSquashed: 'Careful! One more roll squashes it.',
+      rollHint: (rolls: number, target: number) => `Hold SPACE + Left / Right to roll (${rolls}/${target})`,
+      finishRolling: 'Finish rolling with SPACE + Left / Right, then press Up to eat.',
+      smallScoop: 'Not enough rice! Keep holding SPACE to scoop more.',
+      scooped: (rolls: number) => `Scooped! Hold SPACE again and tap ← / → ${rolls} times to roll it into a circle.`,
+    },
+
+    // Table-talk bubbles above the bots' heads. Lines are dealt from a shuffled
+    // deck (see phraseDealer.ts), so keep every line unique and keep both
+    // languages the same length.
+    opponent: {
+      missed: [
+        'MISSED!',
+        '😵 It slipped away!',
+        '😩 What a shame!',
+        '🤦 Oops, I spilled it!',
+        '😅 Nothing, zilch!',
+        '🙄 Where did it go?!',
+        '😤 There goes the lokma!',
+      ],
+      eat: [
+        '🍚 Dahbirha! Roll it!',
+        '🐑 Romanian or baladi lamb?',
+        '🌰 Almond or pine nut?',
+        '🥣 Sharrib, sharrib! Soak it!',
+        '😋 So tasty!',
+        '🥣 Real karaki jameed!',
+        '🤲 Bismillah',
+        '✨ Alhamdulillah',
+        '💛 Bless mom’s hands!',
+        '🔥 Wow, this jameed!',
+        '😅 Easy, man, easy!',
+        '🐑 The lamb just melts!',
+        '🤤 Crazy good, I swear!',
+        '😤 That piece is mine!',
+        '😂 Leave some for the guests!',
+        '🍚 Eat in joy and health!',
+        '👌 Yummy, boss!',
+        '😍 It doesn’t get better!',
+        '🥄 More jameed for me!',
+        '😎 I’m the mansaf master!',
+        '🥜 More almonds, boss!',
+        '🍚 Roll it and say Bismillah!',
+        '🔥 Hot, hot, hot!',
+        '🐐 Lamb or goat?',
+        '🥛 Is that laban or jameed?',
+        '😋 Can’t get enough!',
+        '🙏 Bless you all, hosts!',
+      ],
     },
   },
 
   ar: {
     names: ['أنت', 'زيد', 'عمر', 'سامي'],
-    traits: ['مكانك', 'لقم سريعة', 'أكيل هادئ', 'شهية كبار'],
+    traits: ['مكانك', 'لقمة سريعة', 'ياكل على مهله', 'شهية مفتوحة'],
+
+    meta: {
+      title: 'منسف رش — مكانك عالسدر',
+    },
+
+    // Keyboard key labels drawn on the on-screen key caps.
+    keys: {
+      space: 'المسافة',
+    },
+
+    // Text read out by screen readers only.
+    a11y: {
+      openMenu: 'فتح القائمة',
+      closeGuide: 'إغلاق',
+    },
+
+    lobby: {
+      ariaLabel: 'منسف رش',
+      edition: 'العزومة بلّشت!',
+      soundOn: 'الصوت: شغّال',
+      soundOff: 'الصوت: مكتوم',
+      tagline: 'سدر واحد، أربع شهيات. بتقدر تسبق الشباب؟',
+      start: 'يلا ناكل!',
+      keyboardNote: 'العب بلوحة المفاتيح',
+      rivalsHeading: 'الشباب جاهزين',
+      guideHeading: 'أصول اللقمة',
+      guideSubtitle: 'ثلاث حركات… وبتصير معلّم منسف.',
+      footerTagline: 'سدر واحد. أربع شهيات.',
+      brand: 'منسف رش',
+    },
 
     header: {
-      remaining: 'المنسَف المتبقي',
+      remaining: 'باقي من المنسف',
       menu: 'القائمة',
       logoAlt: 'شعار منسف رش',
       langBtn: 'English',
@@ -136,23 +251,23 @@ export const TRANSLATIONS = {
 
     intro: {
       eyebrow: 'أهلاً بك في المجلس',
-      title: 'طريقة اللعب',
+      title: 'كيف بنلعب؟',
       stepPill: (current: number, total: number) => `الخطوة ${current} من ${total}`,
       steps: [
         {
           title: 'جمّع',
-          desc: 'حرّك إيدك بالأسهم فوق الرز، واضغط مطوّلًا على المسافة لتجمع لحد ما يصير المؤشر أخضر.',
-          label: 'جمع الرز من السدر باستخدام الأسهم والمسافة',
+          desc: 'حرّك إيدك بالأسهم فوق الرز، ودوس عالمسافة وضلّك دايس لتجمّع كفّ رز. لمّا يصير الرز كفاية فلّت المسافة. وإذا لقيت قطعة لحمة أو لوزة شيلها معك وبتاخد نقاط زيادة.',
+          label: 'جمّع الرز من السدر بالأسهم والمسافة',
         },
         {
           title: 'دحبر',
-          desc: 'خليك ضاغط على المسافة، وبدّل بين السهم اليمين واليسار لتدوّر اللقمة وتزبطها.',
-          label: 'تدوير لقمة الرز بالمسافة والسهمين اليمين واليسار',
+          desc: 'دوس المسافة مرة ثانية وضلّك دوس السهم اليمين واليسار لتدحبر اللقمة دايرة. كل ما كان الرز أكتر بدها دحبرة أكتر. وقّف وهي بالأخضر، وإذا زوّدتها بتنعجن.',
+          label: 'دحبر لقمة الرز بالمسافة والسهمين اليمين واليسار',
         },
         {
           title: 'القم',
-          desc: 'لما تجهز اللقمة، اضغط السهم لفوق عشان تاكل وتجمع نقاط. وارجع للقمة اللي بعدها!',
-          label: 'رفع اللقمة للفم باستخدام السهم لفوق',
+          desc: 'لمّا تجهز اللقمة دوس السهم لفوق عشان تاكل وتجمع نقاط. وارجع للقمة اللي بعدها!',
+          label: 'ارفع اللقمة لتمّك بالسهم لفوق',
         },
       ],
       back: 'السابق ➔',
@@ -161,42 +276,41 @@ export const TRANSLATIONS = {
     },
 
     pauseMenu: {
-      eyebrow: 'اللعبة متوقفة',
+      eyebrow: 'اللعبة واقفة',
       title: 'قائمة اللعبة',
-      resume: '◀ استئناف اللعب',
-      howToPlay: '📖 طريقة اللعب',
-      soundOn: '🔊 الصوت: مفعل',
+      resume: '◀ كمّل اللعب',
+      howToPlay: '📖 كيف بنلعب؟',
+      soundOn: '🔊 الصوت: شغّال',
       soundMuted: '🔇 الصوت: مكتوم',
-      restart: '🔄 إعادة اللعب',
+      restart: '🔄 ابدأ من جديد',
       switchLang: '🌐 اللغة: English',
     },
 
     guide: {
-      eyebrow: 'دليل اللعب',
-      title: 'طريقة اللعب',
-      card1Title: '١. تحريك اليد',
-      card1Desc: 'استخدم الأسهم (← → ↑ ↓) للتحرك فوق الأرز في السدر.',
-      card2Title: '٢. الغرف والملء',
-      card2Desc: 'اضغط المسافة فوق الأرز حتى يصبح المؤشر أخضر.',
-      card3Title: '٣. التكبيب والتدوير',
-      card3Desc: 'اضغط ← و → مع المسافة لتكبيب اللقمة بشكل دائر!',
-      card4Title: '٤. الأكل والنقاط',
-      card4Desc: 'اضغط السهم الأعلى (↑) لرفع اللقمة إلى فمك وأكلها!',
-      gotIt: 'فهمت!',
+      eyebrow: 'كيف بنلعب',
+      title: 'كيف بنلعب؟',
+      card1Title: '١. حرّك إيدك',
+      card1Desc: 'حرّك إيدك فوق الرز بالسدر بالأسهم (← → ↑ ↓).',
+      card2Title: '٢. جمّع',
+      card2Desc: 'دوس المسافة فوق الرز وحرّك بالأسهم وجمّع كفّ. لمّا يصير كفاية فلّت المسافة. اللحمة واللوز إلهم نقاط زيادة.',
+      card3Title: '٣. دحبر',
+      card3Desc: 'دوس المسافة مرة ثانية وضلّك دوس ← و →. الرز الأكتر بدو دحبرة أكتر. وقّف وهي بالأخضر، وإذا زوّدتها بتنعجن!',
+      card4Title: '٤. كُل واجمع نقاط',
+      card4Desc: 'دوس السهم لفوق (↑) عشان ترفع اللقمة لتمّك وتاكلها!',
+      gotIt: 'تمام!',
     },
 
     results: {
-      victory: 'فوز مستحق!',
-      roundComplete: 'انتهاء الجولة',
-      youWin: 'فزت بالمنسف!',
-      youLost: 'خسرت الجولة!',
-      winSubline: 'مسحت السدر أسرع وأشطر من الجميع في المجلس!',
+      victory: 'ألف مبروك!',
+      roundComplete: 'خلصت الجولة',
+      youWin: 'فزت يا معلّم!',
+      youLost: 'خسرت هالمرة!',
+      winSubline: 'مسحت السدر وسبقت كل اللي بالمجلس!',
       loseSubline: (winnerName: string, rank: number) =>
-        `${winnerName} أنهى المنسف أولاً — مركزك #${rank}.`,
-      winnerBadge: '👑 الفائز',
+        `${winnerName} سبقك وخلّص المنسف — إنت بالمركز #${rank}.`,
       pts: 'نقطة',
-      playAgain: 'العب مجدداً ↻',
-      tryAgain: 'حاول مجدداً ↻',
+      playAgain: 'العب كمان مرة ↻',
+      tryAgain: 'جرّب كمان مرة ↻',
     },
 
     scoreboard: {
@@ -205,43 +319,99 @@ export const TRANSLATIONS = {
     },
 
     hud: {
-      eating: 'جارٍ أكل اللقمة...',
+      eating: 'عم تاكل اللقمة...',
       lokmaReadyBadge: '🎯 اللقمة جاهزة!',
-      eatAction: 'اكُل',
-      rollProgress: (rolls: number, target: number) => `كبّب اللقمة (${rolls}/${target})`,
-      greenZoneBadge: '🎯 المنطقة الخضراء! اضغط المسافة + ← / → لتكبيب اللقمة',
-      hold: 'اضغط',
-      untilGreen: 'حتى الأخضر',
-      move: 'تحريك',
-      scoop: 'غرف',
+      eatAction: 'كُل',
+      rollProgress: (rolls: number, target: number) => `دحبر اللقمة (${rolls}/${target})`,
+      enoughBadge: '🎯 تمام، الرز كفاية! فلّت المسافة',
+      dry: 'ما في رز تحت إيدك! حرّكها عالرز',
+      hold: 'دوس',
+      toScoop: 'وجمّع',
+      move: 'حرّك',
+      scoop: 'جمّع',
     },
 
+    // The gauge belongs to the roll: yellow is still loose, green is a round circle, red is squashed.
     meter: {
-      holdToRoll: 'اضغط المسافة + ← / → للتكبيب',
-      tooMuchRoll: 'كثيرة جداً! المسافة + ← / → للتكبيب',
-      gatheringRice: 'تجميع الأرز...',
+      zoneLoose: 'سايبة',
+      zoneRound: 'دايرة',
+      zoneSquashed: 'معجونة',
       rollProgress: (rolls: number, target: number) =>
-        `كبّب اللقمة: ${rolls}/${target} (المسافة + ← / →)`,
-      perfectRound: 'لقمة دائرية مثالية! اضغط ↑',
-      squashed: 'لقمة مهروسة! اضغط ↑',
-      underfilled: 'لقمة صغيرة! اضغط ↑',
+        `دحبر اللقمة دايرة: ${rolls}/${target} (المسافة + ← / →)`,
+      perfectRound: 'دايرة تمام! بلاش تدحبر أكتر، دوس ↑',
+      squashed: 'انعجنت! دوس ↑',
     },
 
     lokmaLabels: {
-      tooLoose: 'عفواً! اللقمة فرطت!',
-      delicious: 'أكل لقمة منسف لذيذة!',
-      roundReady: '🎯 اللقمة المكببة جاهزة! اضغط ↑ للأكل!',
-      perfectHold: '🎯 مثالي! واصل الضغط على المسافة + ← / → للتكبيب!',
-      tooMuchHold: '⚠️ كمية كبيرة! المسافة + ← / → للتكبيب!',
-      gatheringHold: 'تجميع الأرز... اضغط المسافة حتى الأخضر!',
-      defaultGuide: 'استخدم الأسهم للتحرك · اضغط المسافة لتجميع الأرز',
+      tooLoose: 'يا ساتر! اللقمة فرطت!',
+      delicious: 'عم تاكل لقمة منسف بتجنّن!',
+      roundReady: '🎯 اللقمة صارت دايرة! دوس ↑ وكُل!',
+      squashed: '💥 انعجنت! دوس ↑ وكُل',
+      enough: '🎯 الرز كفاية! فلّت المسافة!',
+      scooping: 'عم تجمّع... ضلّك دايس عالمسافة لزيادة الرز',
+      defaultGuide: 'حرّك بالأسهم · دوس المسافة عشان تجمّع رز',
+      shapingHold: (rolls: number, target: number) => `دوس المسافة + ← / → عشان تدحبر (${rolls}/${target})`,
     },
 
     feedback: {
-      perfect: '✨ لقمة مثالية!',
-      squashed: '💥 لقمة مهروسة!',
-      sahtein: 'صحتين وعافية!',
-      lambBonus: ' · بونوس اللحمة',
+      perfect: '✨ عالأصول يا معلّم!',
+      squashed: '💥 عجنتها يا زلمة!',
+      lamb: (pts: number) => ` · 🥩 لحمة ${isolateLtr(`+${pts}`)}`,
+      almond: (pts: number) => ` · 🥜 لوز ${isolateLtr(`+${pts}`)}`,
+      roundLokma: 'صارت دايرة! دوس ↑ وكُل، وإذا زوّدتها بتنعجن.',
+      overRolled: 'زوّدتها! عم تنعجن!',
+      almostSquashed: 'انتبه! لو دحبرت مرة كمان بتنعجن.',
+      rollHint: (rolls: number, target: number) => `دوس المسافة + ← / → عشان تدحبر (${rolls}/${target})`,
+      finishRolling: 'كمّل دحبر بالمسافة + ← / →، وبعدين دوس ↑ عشان تاكل.',
+      smallScoop: 'الرز قليل! ضلّك دايس عالمسافة عشان تجمّع أكتر.',
+      scooped: (rolls: number) => `جمّعت الرز! دوس المسافة مرة ثانية و ← / → ${rolls} ${rolls <= 10 ? 'مرات' : 'مرة'} عشان تدحبره دايرة.`,
+    },
+
+    opponent: {
+      missed: [
+        '😬 ما مسكتها!',
+        '😵 فلتت منّي!',
+        '😩 يا خسارة!',
+        '🤦 كبّيتها!',
+        '😅 ولا إشي!',
+        '🙄 وين راحت؟!',
+        '😤 ضاعت اللقمة!',
+      ],
+      eat: [
+        '🍚 دحبرها!',
+        '🐑 لحمة روماني ولا بلدي؟',
+        '🌰 هاد لوز ولا صنوبر؟',
+        '🥣 شرّب شرّب!',
+        '😋 الأكل زاكي',
+        '🥣 جميد كركي أصلي',
+        '🤲 بسم الله',
+        '✨ الحمدلله',
+        '💛 يسلمو ايدين الوالدة',
+        '🔥 يا سلام عالجميد!',
+        '😅 على مهلك يا زلمة!',
+        '🐑 اللحمة بتدوب!',
+        '🤤 بيجنّن والله!',
+        '😤 هاي القطعة إلي!',
+        '😂 خلّي إشي للضيوف!',
+        '🍚 بالهنا والشفا',
+        '👌 طعمة يا معلّم!',
+        '😍 ولا أطيب من هيك!',
+        '🥄 زيدوني جميد!',
+        '😎 أنا معلّم المنسف!',
+        '🥜 كتّر اللوز يا معلّم!',
+        '🍚 دحبر وسمّي!',
+        '🔥 حامي حامي!',
+        '🐐 خروف ولا جدي؟',
+        '🥛 هاد لبن ولا جميد؟',
+        '😋 ما بشبع منه!',
+        '🙏 الله يعطيكم العافية',
+      ],
     },
   },
 };
+
+// Compile-time guard: Arabic must define every key English does, so a string
+// added to one language and forgotten in the other fails the build instead of
+// silently showing up untranslated.
+const sameShape: Record<Lang, typeof TRANSLATIONS.en> = TRANSLATIONS;
+void sameShape;

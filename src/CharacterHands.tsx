@@ -1,13 +1,13 @@
 import { useEffect, useRef, type RefObject } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { createGLTFLoader } from './gltf';
 import type { Game } from './main';
 import { CharacterSleeves } from './CharacterSleeves';
 
 let source: Promise<THREE.Group> | undefined;
 function playerSkin() {
-  return source ??= new GLTFLoader().loadAsync(new URL('./assets/mansaf-player-arm-v6.glb', import.meta.url).href)
+  return source ??= createGLTFLoader().loadAsync(new URL('./assets/web/mansaf-player-arm-v6.glb', import.meta.url).href)
     .then(gltf => {
       const skin = gltf.scene.getObjectByName('HandSkin');
       if (!(skin instanceof THREE.Mesh)) throw new Error('Player hand skin missing');
@@ -30,7 +30,7 @@ export function CharacterHands({ scene, id, game }: { scene: THREE.Group; id: nu
         if (!wrist || !(old instanceof THREE.Mesh)) continue;
         const mesh = template.clone();
         mesh.name = `PlayerStyleHand_${side}`;
-        mesh.geometry = template.geometry.clone();
+        mesh.geometry = template.geometry;
         const material = (Array.isArray(template.material) ? template.material[0] : template.material).clone() as THREE.MeshStandardMaterial;
         const oldMaterial = Array.isArray(old.material) ? old.material[0] : old.material;
         if (oldMaterial instanceof THREE.MeshStandardMaterial) material.color.copy(oldMaterial.color);
@@ -50,7 +50,8 @@ export function CharacterHands({ scene, id, game }: { scene: THREE.Group; id: nu
     return () => {
       cancelled = true; hands.current = [];
       originals.forEach(mesh => { mesh.visible = true; });
-      attachments.forEach(mesh => { mesh.removeFromParent(); mesh.geometry.dispose(); (mesh.material as THREE.Material).dispose(); });
+      // The geometry is shared by every bot hand, so only the per-hand material is disposed.
+      attachments.forEach(mesh => { mesh.removeFromParent(); (mesh.material as THREE.Material).dispose(); });
     };
   }, [scene]);
   useFrame((_, delta) => {

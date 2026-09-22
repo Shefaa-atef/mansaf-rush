@@ -27,9 +27,12 @@ test('reversing midway starts from the current rice angle instead of snapping', 
 
 test('final roll finishes shaping before the rice stops moving', () => {
   const l = { ...freshLokma(), shaping: true, space: true };
-  performRoll(l, 'left', 1000); performRoll(l, 'right', 1700); performRoll(l, 'left', 2400);
+  // Every roll the scoop needs, each left to finish turning before the next.
+  let last = 1000;
+  for (let i = 0; i < l.targetRolls; i++, last += 700) performRoll(l, i % 2 ? 'right' : 'left', last);
+  last -= 700;
   assert.equal(l.readyToEat, true);
-  assert.equal(riceRollingMotion(l, 2700).active, true);
-  assert.equal(riceRollingMotion(l, 3040).formation, 1);
-  assert.equal(riceRollingMotion(l, 3040).active, false);
+  assert.equal(riceRollingMotion(l, last + 300).active, true);
+  assert.equal(riceRollingMotion(l, last + 640).formation, 1);
+  assert.equal(riceRollingMotion(l, last + 640).active, false);
 });

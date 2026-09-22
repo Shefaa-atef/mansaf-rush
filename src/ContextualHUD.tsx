@@ -1,5 +1,5 @@
 import React from 'react';
-import { type Lokma } from './lokma';
+import { type Lokma, MIN_SCOOP } from './lokma';
 import { LokmaMeter } from './LokmaMeter';
 import { type Lang, TRANSLATIONS } from './i18n';
 
@@ -18,8 +18,10 @@ export function ContextualHUD({
   showFeedback: boolean;
   lang?: Lang;
 }) {
-  const isPerfect = lokma.meterZone === 'perfect';
+  // Enough rice in the palm to roll it. Scooping has no gauge, only this "enough" cue.
+  const enoughRice = lokma.gathering && lokma.amount >= MIN_SCOOP;
   const t = TRANSLATIONS[lang].hud;
+  const space = TRANSLATIONS[lang].keys.space;
 
   return (
     <div className="contextual-hud-container">
@@ -28,13 +30,13 @@ export function ContextualHUD({
         <div className="hud-feedback-toast">{feedback}</div>
       )}
 
-      {/* Meter gauge when gathering or shaping */}
+      {/* Roundness gauge, only while the rice is being rolled into a circle */}
       <LokmaMeter lokma={lokma} lang={lang} />
 
       {/* Floating gameplay assistant panel */}
       <div
         className={`hud-floating-panel ${
-          isPerfect && lokma.gathering ? 'is-target-hit' : lokma.readyToEat ? 'is-target-hit' : ''
+          enoughRice || (lokma.readyToEat && lokma.meterZone === 'round') ? 'is-target-hit' : ''
         }`}
       >
         {lokma.eating ? (
@@ -50,7 +52,7 @@ export function ContextualHUD({
         ) : lokma.shaping ? (
           <div className="hud-state-fade">
             <div className="key-action-group">
-              <KeyCap wide>SPACE</KeyCap>
+              <KeyCap wide>{space}</KeyCap>
               <span className="hud-dot-sep">+</span>
               <KeyCap>←</KeyCap>
               <KeyCap>→</KeyCap>
@@ -61,13 +63,15 @@ export function ContextualHUD({
           </div>
         ) : lokma.gathering ? (
           <div className="hud-state-fade">
-            {isPerfect ? (
-              <div className="release-target-badge">{t.greenZoneBadge}</div>
+            {enoughRice ? (
+              <div className="release-target-badge">{t.enoughBadge}</div>
+            ) : lokma.dry ? (
+              <span className="hud-label-primary">{t.dry}</span>
             ) : (
               <div className="hud-hold-row">
                 <span className="hud-label-sub">{t.hold}</span>
-                <KeyCap wide>SPACE</KeyCap>
-                <span className="hud-label-sub">{t.untilGreen}</span>
+                <KeyCap wide>{space}</KeyCap>
+                <span className="hud-label-sub">{t.toScoop}</span>
               </div>
             )}
           </div>
@@ -86,7 +90,7 @@ export function ContextualHUD({
             <span className="hud-dot-sep">•</span>
 
             <div className="key-action-group">
-              <KeyCap wide>SPACE</KeyCap>
+              <KeyCap wide>{space}</KeyCap>
               <span className="hud-label-sub">{t.scoop}</span>
             </div>
           </div>

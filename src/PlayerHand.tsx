@@ -2,14 +2,15 @@ import { useEffect, useMemo, useRef, type RefObject } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { keepHandAboveFood } from './handClearance';
-import { foodObstacleHeight, foodSurface } from './MansafPlatter';
+import { almondUnder, foodObstacleHeight, foodSurface, foodTopBound, meatUnder, toppingsOnPatch } from './MansafPlatter';
 import { platterFood } from './platterFood';
-import { freshLokma, beginEating, updateMeter, lockMeter, performRoll } from './lokma';
+import { freshLokma, pressEat, serveQueuedEat, updateScoop, lockScoop, performRoll, nextRollSquashes } from './lokma';
 import { type HandMotion, type HandPoseName } from './handPoses';
 import { playerArmMotion, EATING_TIMING } from './playerArmMotion';
 import { HandFood } from './HandFood';
 import { BlenderPlayerArm } from './BlenderPlayerArm';
-import { playEat, playGatherTip, unlockAudio } from './sfx';
+import { playEat, playRoundLokma, playSquashed, unlockAudio } from './sfx';
+import { type Lang, TRANSLATIONS } from './i18n';
 
 import type { Game } from './main';
 const smooth = (t: number) => THREE.MathUtils.smoothstep(t, 0, 1);
@@ -24,11 +25,17 @@ const ARM_RIGHT_SHIFT = 0.32;
 export function PlayerHand({
   game,
   onEat,
+  lang = 'en',
 }: {
   game: RefObject<Game>;
   onEat: (now: number) => void;
+  lang?: Lang;
 }) {
   const { camera } = useThree();
+  // Key handlers below are registered once, so they read the language through
+  // a ref to always show the hint in whatever language is currently selected.
+  const langRef = useRef<Lang>(lang);
+  langRef.current = lang;
   const hand = useRef<THREE.Group>(null),
     spills = useRef<THREE.Group>(null),
     intake = useRef<THREE.Group>(null);
@@ -36,9 +43,6 @@ export function PlayerHand({
   const motion = useRef<HandMotion>({ pose: 'OPEN', pulse: 0 });
   const keysDown = useRef<{ [key: string]: boolean }>({});
   const mouthSounded = useRef(0);
-  // Plays the "gather it, roll it, take a bite" tip once, the first time the
-  // player actually starts gathering rice in real gameplay (not the tutorial).
-  const gatherTipSounded = useRef(false);
 
   const p = useMemo(
     () => ({
@@ -87,28 +91,36 @@ export function PlayerHand({
         l.space = true;
         if (!l.eating && !l.gathering && !l.shaping && !l.readyToEat) {
           l.gathering = true;
-          if (!gatherTipSounded.current) {
-            gatherTipSounded.current = true;
-            playGatherTip();
-          }
         }
       } else if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
-        if (l.space && !l.eating && !l.readyToEat) {
-          if (l.gathering && l.meter < 45) {
-            g.feedback = 'Keep gathering until the meter reaches GREEN.';
-            g.feedbackAt = now;
-            return;
-          }
-          if (l.gathering) lockMeter(l, now);
+        // While SPACE is held to scoop, ← / → only steer the hand across the rice. They roll only
+        // once the scoop is locked (SPACE let go) and SPACE is held again. Starting the roll from a
+        // steering tap made people roll, and squash the lokma, before they knew it had begun.
+        if (l.space && !l.eating && (l.shaping || l.readyToEat)) {
+          const before = l.meterZone, wasReady = l.readyToEat;
           if (performRoll(l, e.code === 'ArrowLeft' ? 'left' : 'right', now)) {
-            g.feedback = l.readyToEat ? 'ROUND LOKMA! Press Up after the last roll finishes.' : `Hold SPACE + Left / Right to roll (${l.rolls}/${l.targetRolls})`;
+            const fb = TRANSLATIONS[langRef.current].feedback;
+            if (l.meterZone === 'squashed') {
+              g.feedback = fb.overRolled;
+              if (before !== 'squashed') playSquashed();
+            } else if (!wasReady && l.readyToEat) {
+              g.feedback = fb.roundLokma;
+              playRoundLokma();
+            } else if (nextRollSquashes(l)) {
+              g.feedback = fb.almostSquashed;
+            } else {
+              g.feedback = l.readyToEat ? fb.roundLokma : fb.rollHint(l.rolls, l.targetRolls);
+            }
             g.feedbackAt = now;
           }
         }
       } else if (e.code === 'ArrowUp') {
-        if (beginEating(l, now)) p.from.copy(p.hand);
-        else if (l.shaping || l.readyToEat) {
-          g.feedback = 'Finish rolling with SPACE + Left / Right, then press Up to eat.';
+        const result = pressEat(l, now);
+        if (result === 'eating') p.from.copy(p.hand);
+        // A round lokma whose last roll is still turning is queued by pressEat and eaten a moment
+        // later, so only a lokma that is not round yet gets a hint.
+        else if (result === 'not-round-yet' && l.shaping) {
+          g.feedback = TRANSLATIONS[langRef.current].feedback.finishRolling;
           g.feedbackAt = now;
         }
       }
@@ -123,14 +135,10 @@ export function PlayerHand({
         l.space = false;
         if (l.gathering) {
           const now = performance.now();
-          lockMeter(l, now);
-          if (l.meter < 45) {
-            g.feedback = 'UNDERFILLED! Hold SPACE longer until GREEN!';
-            g.feedbackAt = now;
-          } else {
-            g.feedback = 'RICE GATHERED! Hold SPACE + ← / → to roll!';
-            g.feedbackAt = now;
-          }
+          lockScoop(l);
+          const fb = TRANSLATIONS[langRef.current].feedback;
+          g.feedback = l.shaping ? fb.scooped(l.targetRolls) : fb.smallScoop;
+          g.feedbackAt = now;
         }
       }
     };
@@ -139,7 +147,7 @@ export function PlayerHand({
       keysDown.current = {};
       if (game.current?.lokma) {
         game.current.lokma.space = false;
-        if (game.current.lokma.gathering) lockMeter(game.current.lokma);
+        if (game.current.lokma.gathering) lockScoop(game.current.lokma);
       }
     };
 
@@ -184,21 +192,15 @@ export function PlayerHand({
       const speed = 1.45;
       let dx = 0,
         dz = 0;
-      // Movement is allowed when not shaping/eating
-      if (!l.space && !l.shaping && !l.readyToEat) {
+      // Arrows / WASD steer the hand any time it isn't rolling a lokma or
+      // lifting a finished one. Holding SPACE to gather does NOT pin the hand
+      // any more, so the player can keep sliding across the rice while the
+      // palm fills.
+      if (!l.shaping && !l.readyToEat) {
         if (keysDown.current['ArrowLeft'] || keysDown.current['KeyA']) dx -= speed;
         if (keysDown.current['ArrowRight'] || keysDown.current['KeyD']) dx += speed;
-        if (keysDown.current['ArrowUp'] || keysDown.current['KeyW']) {
-          if (!l.readyToEat) dz -= speed;
-        }
+        if (keysDown.current['ArrowUp'] || keysDown.current['KeyW']) dz -= speed;
         if (keysDown.current['ArrowDown'] || keysDown.current['KeyS']) dz += speed;
-      }
-
-      if (l.gathering && !l.shaping) {
-        if (keysDown.current['KeyA']) dx -= speed;
-        if (keysDown.current['KeyD']) dx += speed;
-        if (keysDown.current['KeyW']) dz -= speed;
-        if (keysDown.current['KeyS']) dz += speed;
       }
       p.input.set(dx, dz).clampLength(0, speed);
       p.velocity.lerp(p.input, 1 - Math.exp(-10 * dt));
@@ -218,13 +220,20 @@ export function PlayerHand({
       l.z = p.target.z;
 
       const surface = foodSurface(l.x, l.z, g.remaining);
+      l.dry = l.gathering && !surface.available;
       p.target.y = surface.height + (l.gathering ? 0.145 : l.shaping ? 0.22 : l.readyToEat ? 0.38 : 0.25);
 
       if (l.gathering) {
         if (surface.available) {
-          updateMeter(l, Math.min(delta, .25), now);
-          l.almond = l.almond || surface.almond;
-          l.meat = l.meat || (l.amount > 2 && surface.meat);
+          updateScoop(l, Math.min(delta, .25), now);
+          // Lamb and almonds only go into the lokma if they really left the tray with it, and the
+          // lokma gets everything that leaves. The hand takes a piece the moment it closes on it, no
+          // matter how little rice it holds yet (the old check waited for two units of rice, by which
+          // time the rice under the lamb was already gone and the lamb had vanished for nothing).
+          const piece = meatUnder(l.x, l.z);
+          if (piece >= 0 && platterFood.takeMeat(piece)) l.meat = true;
+          const nut = almondUnder(l.x, l.z);
+          if (nut >= 0 && platterFood.takeAlmond(nut)) l.almond = true;
           if (surface.bread) l.bread += dt * 2;
           // Pull rice off the platter as it's scooped, not only once the whole
           // lokma is later swallowed - the mound should visibly shrink under
@@ -235,24 +244,22 @@ export function PlayerHand({
           // scoop already having been taken off the tray.
           const want = l.amount - l.taken;
           if (want > 1e-4) {
-            const got = platterFood.consume(l.x, l.z, want);
+            const got = platterFood.consume(l.x, l.z, want, (patch) => {
+              // Rice that leaves the tray takes whatever sat on it along.
+              const { meat, almonds } = toppingsOnPatch(patch);
+              for (const i of meat) if (platterFood.takeMeat(i)) l.meat = true;
+              for (const i of almonds) if (platterFood.takeAlmond(i)) l.almond = true;
+            });
             g.remaining = Math.max(0, g.remaining - got);
             l.taken += got;
-            // Normally a bot-tick notices g.remaining hitting 0 and ends the
-            // round; if the player's own gathering is what empties it, end it
-            // right here instead of waiting on the next bot cycle (mirrors
-            // finish() in main.tsx without importing back from it).
-            if (g.remaining <= 0 && g.phase === 'playing') {
-              g.phase = 'ended';
-              g.reason = 'platter';
-              l.gathering = false;
-              l.space = false;
-            }
+            // Ending the round is main.tsx's job (its tick sees the empty platter and publishes
+            // the result). Flipping the phase here left the results screen unpublished.
           }
         }
       }
     }
 
+    if (serveQueuedEat(l, now)) p.from.copy(p.hand);
     let eatT = l.eating ? (now - l.eating) / 1000 : 0;
     if (l.eating) {
       p.mouth.set(0, -0.58, -2.65).applyQuaternion(camera.quaternion).add(camera.position);
@@ -313,7 +320,7 @@ export function PlayerHand({
       );
       p.quaternion.setFromEuler(p.rotation);
       hand.current.quaternion.slerp(p.quaternion, blend);
-      keepHandAboveFood(hand.current, (x, z) => foodObstacleHeight(x, z, g.remaining));
+      keepHandAboveFood(hand.current, (x, z) => foodObstacleHeight(x, z, g.remaining), foodTopBound);
       // Keep the gesture offset out of the movement integrator: no accumulating drift.
       p.hand.y = hand.current.position.y - animation.lift;
       hand.current.userData.pose = name;

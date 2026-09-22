@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, type RefObject } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import type { Lokma } from './lokma';
+import { squashAmount, type Lokma } from './lokma';
 import { riceRollingMotion } from './riceRollingMotion';
 
 /** Local palm coordinates: loose food sits toward the heel, formed food near the knuckles. */
@@ -10,10 +10,37 @@ export const FOOD_HOLDING_REGION = {
   formed: new THREE.Vector3(-.012, .062, -.080),
 };
 
+type V3 = [number, number, number];
+/**
+ * Lamb and almonds ride on the rice: on the palm while it is loose, and in the outer skin of the ball
+ * once it is round. They sit on the side facing the game camera (local +z) so they read from the
+ * camera and stay put when the ball spins about z during the roll. Positions are in the same local
+ * space as the rice, so they follow the roll and the squash.
+ */
+const LAMB = { loose: new THREE.Vector3(.030, .030, .040), formed: new THREE.Vector3(.030, .034, .076), rotation: [.35, .5, .25] as V3, scale: [.056, .036, .046] as V3 };
+const ALMONDS = [
+  { loose: new THREE.Vector3(-.050, .020, .030), formed: new THREE.Vector3(-.052, .040, .062), rotation: [.30, .9, .2] as V3, color: '#a8682f' },
+  { loose: new THREE.Vector3(-.020, .024, .050), formed: new THREE.Vector3(-.012, .010, .084), rotation: [.20, -.5, -.2] as V3, color: '#b57b40' },
+  { loose: new THREE.Vector3(-.038, .026, -.010), formed: new THREE.Vector3(-.034, .086, .030), rotation: [.10, .2, 0] as V3, color: '#a8682f' },
+];
+const ALMOND_SCALE: V3 = [.020, .013, .036];
+
 export function HandFood({ game }: { game: RefObject<{ lokma: Lokma; phase: string }> }) {
   const root = useRef<THREE.Group>(null), rice = useRef<THREE.InstancedMesh>(null);
-  const mass = useRef<THREE.Mesh>(null), bread = useRef<THREE.Group>(null), lamb = useRef<THREE.Mesh>(null), almond = useRef<THREE.Mesh>(null);
-  const smooth = useRef({ formation: 0, amount: 0, count: 0 });
+  const mass = useRef<THREE.Mesh>(null), bread = useRef<THREE.Group>(null), lamb = useRef<THREE.Mesh>(null), almonds = useRef<THREE.Group>(null);
+  const smooth = useRef({ formation: 0, amount: 0, count: 0, squash: 0 });
+  const { gl, scene, camera } = useThree();
+  // The hand's food is hidden until the first scoop, so its shaders would only be compiled then, as a
+  // stall of well over a hundred milliseconds in the middle of the first scoop. Show all of it for one
+  // synchronous compile now, while the scene is loading, and hide it again.
+  useEffect(() => {
+    const group = root.current;
+    if (!group) return;
+    const hidden: THREE.Object3D[] = [];
+    group.traverse((o) => { if (!o.visible) { o.visible = true; hidden.push(o); } });
+    gl.compile(scene, camera);
+    hidden.forEach((o) => { o.visible = false; });
+  }, [gl, scene, camera]);
   const resources = useMemo(() => {
     const grain = new THREE.SphereGeometry(1, 6, 4);
     const core = new THREE.IcosahedronGeometry(1, 2);
@@ -41,10 +68,12 @@ export function HandFood({ game }: { game: RefObject<{ lokma: Lokma; phase: stri
     const l = game.current.lokma, state = smooth.current, blend = 1 - Math.exp(-15 * Math.min(delta, .05));
     if (!root.current || !rice.current) return;
     root.current.visible = game.current.phase !== 'ended' && l.amount > 0 && !l.swallowed;
-    if (!root.current.visible) { state.formation = 0; state.amount = 0; state.count = 0; return; }
+    if (!root.current.visible) { state.formation = 0; state.amount = 0; state.count = 0; state.squash = 0; return; }
     const shaping = riceRollingMotion(l, performance.now());
     state.formation += (shaping.formation - state.formation) * blend;
     state.amount += (l.amount - state.amount) * blend;
+    // Rolling on after the circle is round flattens the ball, more with every extra roll.
+    state.squash += (squashAmount(l) - state.squash) * blend;
     const form = state.formation, size = .62 + .34 * Math.cbrt(Math.min(state.amount, 7) / 6);
     root.current.position.lerpVectors(FOOD_HOLDING_REGION.loose, FOOD_HOLDING_REGION.formed, form);
     root.current.position.y += .092 * form * size;
@@ -52,7 +81,8 @@ export function HandFood({ game }: { game: RefObject<{ lokma: Lokma; phase: stri
     root.current.position.z += shaping.z;
     // Rolling has a horizontal axis; spinning around Y made the rice look like a top.
     root.current.rotation.set(shaping.angle * .28, 0, -shaping.angle);
-    root.current.scale.set(size * (1 + shaping.compression * .3), size * (1 - shaping.compression), size * (1 + shaping.compression * .3));
+    const widen = shaping.compression * .3 + state.squash * .14, flatten = shaping.compression + state.squash * .18;
+    root.current.scale.set(size * (1 + widen), size * (1 - flatten), size * (1 + widen));
     const count = Math.min(80, Math.ceil(Math.max(0, state.amount - l.bread) * 11.4));
     resources.samples.forEach((sample, i) => {
       if (i >= count) return;
@@ -83,8 +113,15 @@ export function HandFood({ game }: { game: RefObject<{ lokma: Lokma; phase: stri
         piece.rotation.set(form * .4, sample.angle, .08 * Math.sin(i));
       });
     }
-    if (lamb.current) lamb.current.visible = l.meat;
-    if (almond.current) almond.current.visible = l.almond;
+    // Only food that was really taken off the tray with this scoop is drawn in the palm.
+    if (lamb.current) {
+      lamb.current.visible = l.meat;
+      lamb.current.position.lerpVectors(LAMB.loose, LAMB.formed, form);
+    }
+    if (almonds.current) {
+      almonds.current.visible = l.almond;
+      almonds.current.children.forEach((nut, i) => nut.position.lerpVectors(ALMONDS[i].loose, ALMONDS[i].formed, form));
+    }
   }, -1);
 
   return <group ref={root} name="food-holding-region" visible={false}>
@@ -95,7 +132,10 @@ export function HandFood({ game }: { game: RefObject<{ lokma: Lokma; phase: stri
     <group ref={bread} name="shrak-in-palm">{Array.from({ length: 24 }, (_, i) =>
       <mesh key={i} scale={[.038, .005, .030]}><dodecahedronGeometry args={[1, 0]} /><meshStandardMaterial color={i % 3 ? '#d6b279' : '#b98b54'} roughness={.95} /></mesh>
     )}</group>
-    <mesh ref={lamb} position={[.02, .045, -.02]} scale={[.040, .026, .033]}><dodecahedronGeometry args={[1, 0]} /><meshStandardMaterial color="#895638" /></mesh>
-    <mesh ref={almond} position={[-.035, .074, .015]} scale={[.018, .012, .031]}><sphereGeometry args={[1, 12, 8]} /><meshStandardMaterial color="#bd8549" roughness={.8} /></mesh>
+    {/* Lamb and almonds sit in the outer skin of the ball, so they stay visible after it is rolled round. */}
+    <mesh ref={lamb} position={LAMB.formed} rotation={LAMB.rotation} scale={LAMB.scale}><dodecahedronGeometry args={[1, 0]} /><meshStandardMaterial color="#6f4128" roughness={.85} /></mesh>
+    <group ref={almonds}>{ALMONDS.map((nut, i) =>
+      <mesh key={i} position={nut.formed} rotation={nut.rotation} scale={ALMOND_SCALE}><sphereGeometry args={[1, 12, 8]} /><meshStandardMaterial color={nut.color} roughness={.8} /></mesh>
+    )}</group>
   </group>;
 }

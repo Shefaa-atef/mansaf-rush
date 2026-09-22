@@ -1,24 +1,26 @@
+import { limitWristBend } from './characterWrist';
 import { refineCharacterFace } from './characterFaces';
 import { refineCharacterBody } from './characterBody';
 import { refineCharacterNose } from './characterNoses';
 import { refineCharacterEye } from './characterEyes';
 import { extendArmForReach } from './characterArmProportions';
-import { botBiteWrist } from './botBiteMotion';
+import { botBiteWrist, BOT_SCOOP_SINK } from './botBiteMotion';
 import { CharacterHands } from './CharacterHands';
 import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { createGLTFLoader } from './gltf';
 import { botSeats } from './platterFood';
-import { foodObstacleHeight, foodSurface } from './MansafPlatter';
+import { foodObstacleHeight, foodSurface, foodTopBound } from './MansafPlatter';
+import { contactLift } from './handContact';
 import type { Game } from './main';
 import { ChibiFeet } from './ChibiFeet';
 const refinedLook = new URLSearchParams(window.location.search).get('look') !== 'before';
 
 const urls = [
-  new URL('./assets/zaid-chibi-polished.glb', import.meta.url).href,
-  new URL('./assets/omar-chibi-polished.glb', import.meta.url).href,
-  new URL('./assets/sami-chibi-polished.glb', import.meta.url).href,
+  new URL('./assets/web/zaid-chibi-polished.glb', import.meta.url).href,
+  new URL('./assets/web/omar-chibi-polished.glb', import.meta.url).href,
+  new URL('./assets/web/sami-chibi-polished.glb', import.meta.url).href,
 ];
 const ease = (t: number) => THREE.MathUtils.smootherstep(t, 0, 1);
 type Arm = { upper: THREE.Bone; fore: THREE.Bone; hand: THREE.Bone; bind: THREE.Quaternion; a: number; b: number };
@@ -55,7 +57,7 @@ export function PolishedStudioCharacter({ id, game, fallback, onChew, onUnlock }
   useEffect(() => {
     let cancelled = false, loaded: THREE.Group | undefined;
     window.addEventListener('pointerdown', onUnlock);
-    new GLTFLoader().load(urls[id - 1], gltf => {
+    createGLTFLoader().load(urls[id - 1], gltf => {
       if (cancelled) { dispose(gltf.scene); return; }
       loaded = gltf.scene;
       const seat = botSeats[id - 1], yaw = id === 1 ? .85 : id === 3 ? -.85 : 0;
@@ -182,27 +184,29 @@ export function PolishedStudioCharacter({ id, game, fallback, onChew, onUnlock }
     if (active) {
       p.scoop.set(...g.biteTargets[id]);
       p.mouth.copy(r.mouthSocket); r.head.localToWorld(p.mouth);
-      botBiteWrist(t, p.scoop, p.mouth, p.ready, p.handQ, p.goal);
+      botBiteWrist(t, p.scoop, p.mouth, p.ready, p.handQ, p.goal, BOT_SCOOP_SINK);
     }
     for (const finger of r.fingers) {
       const thumb = finger.name.startsWith('thumb'), distal = finger.name.endsWith('_2');
       p.q.setFromAxisAngle(p.axis.set(1, 0, 0), curl * (thumb ? .50 : distal ? .92 : .64));
       finger.quaternion.copy(r.rest.get(finger)!).multiply(p.q);
     }
-    for (let pass = 0; pass < 3; pass++) {
+    const desiredHandQ = p.handQ.clone();
+    const foodAt = (x: number, z: number) => foodObstacleHeight(x, z, g.remaining);
+    const skinMeshes = r.skin.map(original => (scene.getObjectByName('PlayerStyleHand_R') as THREE.Mesh | undefined) ?? original);
+    for (let pass = 0; pass < 8; pass++) {
       solve(r.right, p.goal, -1);
-      r.right.hand.parent!.getWorldQuaternion(p.parent); r.right.hand.quaternion.copy(p.parent.invert().multiply(p.handQ));
-      scene.updateMatrixWorld(true);
-      let liftOut = 0;
-      for (const original of r.skin) {
-        const mesh = (scene.getObjectByName('PlayerStyleHand_R') as THREE.Mesh | undefined) ?? original;
-        if (mesh instanceof THREE.SkinnedMesh) mesh.skeleton.update();
-        for (let i = 0; i < mesh.geometry.attributes.position.count; i += 32) {
-          mesh.getVertexPosition(i, p.point); mesh.localToWorld(p.point);
-          liftOut = Math.max(liftOut, foodObstacleHeight(p.point.x, p.point.z, g.remaining) + .008 - p.point.y);
-        }
+      p.handQ.copy(desiredHandQ);
+      limitWristBend(p.handQ, p.elbow, p.wrist);
+      if (active && pass < 7) {
+        botBiteWrist(t, p.scoop, p.mouth, p.ready, p.handQ, p.goal, BOT_SCOOP_SINK);
       }
-      if (liftOut < .004) break;
+      r.right.hand.parent!.getWorldQuaternion(p.parent); r.right.hand.quaternion.copy(p.parent.invert().multiply(p.handQ));
+      // solve() refreshed the arm above the hand; only the hand itself moved since then.
+      r.right.hand.updateWorldMatrix(false, true);
+      let liftOut = 0;
+      for (const mesh of skinMeshes) liftOut = Math.max(liftOut, contactLift(mesh, 32, .008, foodAt, foodTopBound));
+      if (liftOut < .004 && (!active || pass >= 7)) break;
       p.goal.y += Math.min(liftOut, .25);
     }
     // Same fix as PolishedBlenderCharacter.tsx's leftHand target: checked
@@ -237,3 +241,4 @@ export function PolishedStudioCharacter({ id, game, fallback, onChew, onUnlock }
     {Array.from({ length: 20 }, (_, i) => <mesh key={i} position={[Math.sin(i * 2.4) * .073, Math.sin(i * 1.7) * .047, Math.cos(i * 2.4) * .07]} scale={[.015, .01, .025]}><sphereGeometry args={[1, 6, 4]}/><meshStandardMaterial color="#efd18a" roughness={.9}/></mesh>)}
   </group></group>;
 }
+

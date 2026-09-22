@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import pattern1Url from './assets/pattern 1.png';
-import pattern2Url from './assets/pattern 2.png';
+import pattern1Url from './assets/web/pattern-1.webp';
+import pattern2Url from './assets/web/pattern-2.webp';
 import pattern3Url from './assets/pattern 3.png';
 
 function canvasTexture(draw: (ctx: CanvasRenderingContext2D) => void, repeats: [number, number] = [1, 1]) {
