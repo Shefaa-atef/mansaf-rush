@@ -129,8 +129,20 @@ button:focus-visible { outline:3px solid var(--paper); outline-offset:6px; }
 .lobby-enter.primary-btn { display:flex; justify-content:center; align-items:center; gap:14px; width:min(305px,100%); min-height:72px; padding:13px 20px; border:3px solid #5b2b11; border-radius:20px; background:linear-gradient(#ffe592 0%,#ffd259 44%,#f3ac2f 100%); box-shadow:inset 0 3px 0 #fff4c9,0 8px 0 #92501f,0 12px 0 #1b0b08,0 15px 35px #0005; color:#432410; font:900 28px/1.3 'Outfit','Changa',sans-serif; text-shadow:0 1px 0 #fff0b0; transition:transform .15s,filter .15s; }
 .lobby-enter.primary-btn:hover { transform:translateY(-3px) rotate(-1deg); filter:brightness(1.08); }
 .lobby-enter.primary-btn:active { transform:translateY(5px); box-shadow:inset 0 3px 0 #fff4c9,0 3px 0 #92501f,0 6px 0 #1b0b08; }
+.lobby-enter.primary-btn:disabled { cursor:progress; filter:grayscale(.25) brightness(.9); }
+.lobby-enter.primary-btn:disabled:hover { transform:none; filter:grayscale(.25) brightness(.9); }
 .lobby-play-icon { font-size:24px; }
 .lobby-control-note { font:900 9px 'Nunito','Changa',sans-serif; letter-spacing:1.5px; color:#c3a68b; }
+
+/* Loading panel: replaces the keyboard note under the Play button while the 3D scene is still
+   downloading, so a genuinely slow first load reads as "on its way" instead of frozen. */
+.lobby-loading { display:flex; flex-direction:column; align-items:center; gap:8px; width:min(305px,100%); animation:lobby-arrive .4s ease-out both; }
+.lobby-loading-track { width:100%; height:13px; border:2px solid #4a271b; border-radius:8px; background:#1b0b08; box-shadow:inset 0 2px 4px #00000066; overflow:hidden; }
+.lobby-loading-fill { height:100%; border-radius:6px; min-width:6px; background:linear-gradient(90deg,#ffd259,#ffce51 45%,#f3ac2f); background-size:200% 100%; transition:width .3s ease-out; animation:lobby-loading-shimmer 1.4s linear infinite; }
+@keyframes lobby-loading-shimmer { from { background-position:0 0; } to { background-position:-200% 0; } }
+.lobby-loading-meta { display:flex; justify-content:space-between; align-items:baseline; width:100%; font:900 10px 'Nunito','Changa',sans-serif; letter-spacing:1px; color:#c3a68b; }
+.lobby-loading-pct { color:var(--lobby-gold); }
+.lobby-loading-tip { margin:0; max-width:290px; font:700 11px/1.6 'Nunito','Changa',sans-serif; color:#edceb0; text-align:center; }
 .lobby-rivals { margin-top:28px; }
 .lobby-rivals>span { font-size:9px; font-weight:900; letter-spacing:1.5px; color:#c3a68b; }
 .lobby-rivals>div { display:flex; justify-content:center; gap:20px; margin-top:10px; }

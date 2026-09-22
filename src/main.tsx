@@ -10,8 +10,8 @@ import { MobileHeader } from './MobileHeader';
 import { type Lang, TRANSLATIONS, isolateLtr } from './i18n';
 import { formatNumber, roundTo2 } from './formatNumber';
 import * as sfx from './sfx';
-import { prefetchSceneAssets } from './sceneAssets';
-import { allPartsReady, whenPartsReady } from './sceneReadiness';
+import { prefetchSceneAssets, sceneLoadFraction, onSceneLoadProgress } from './sceneAssets';
+import { allPartsReady, whenPartsReady, readyPartCount, totalPartCount, onPartsChange } from './sceneReadiness';
 import logoImg from './assets/web/mansaf-rush-logo.webp';
 import meImg from './assets/web/portrait-me.webp';
 import zaidImg from './assets/web/portrait-zaid.webp';
@@ -148,7 +148,11 @@ function App() {
     [soundMuted, setSoundMuted] = useState(false),
     [lang, setLang] = useState<Lang>(() => (localStorage.getItem('mansaf_lang') as Lang) || 'en'),
     [sceneWanted, setSceneWanted] = useState(false),
-    [starting, setStarting] = useState(false);
+    [starting, setStarting] = useState(false),
+    [loadFraction, setLoadFraction] = useState(0),
+    [canPlay, setCanPlay] = useState(() => allPartsReady()),
+    [showLoadingPanel, setShowLoadingPanel] = useState(false),
+    [loadingTipIndex] = useState(() => Math.floor(Math.random() * 3));
 
   const t = TRANSLATIONS[lang];
   // eat() must keep one identity for the life of the page (it is a prop of the 3D scene), so it
@@ -158,6 +162,7 @@ function App() {
   const names = t.names;
   const traits = t.traits;
   const mobileSteps = window.innerWidth <= 700 ? MOBILE_STEPS[lang] : t.intro.steps;
+  const loadingTips = window.innerWidth <= 700 ? t.lobby.loadingTipsMobile : t.lobby.loadingTips;
 
   const toggleLang = () => {
     const nextLang: Lang = lang === 'en' ? 'ar' : 'en';
@@ -241,7 +246,36 @@ function App() {
     };
   }, [sceneWanted]);
 
+  // Combine the models' download bytes (the dominant share of the wait) with how many of them have
+  // finished parsing and mounting into a seat, into one 0 to 1 figure for the lobby's loading bar.
+  useEffect(() => {
+    const recompute = () => {
+      const bytes = sceneLoadFraction();
+      const parts = readyPartCount() / totalPartCount();
+      setLoadFraction(0.85 * bytes + 0.15 * parts);
+      setCanPlay(allPartsReady());
+    };
+    recompute();
+    const offBytes = onSceneLoadProgress(recompute);
+    const offParts = onPartsChange(recompute);
+    return () => { offBytes(); offParts(); };
+  }, []);
+
+  // The loading panel only appears once the wait has gone on long enough to notice, so a fast or
+  // cached load (the model bytes already in the browser's cache) goes straight to an enabled
+  // button instead of flashing a progress bar that finishes before anyone could read it.
+  useEffect(() => {
+    if (canPlay) return;
+    const timer = window.setTimeout(() => setShowLoadingPanel(true), 250);
+    return () => window.clearTimeout(timer);
+  }, [canPlay]);
+
   const warmScene = () => { setSceneWanted(true); void loadScene(); };
+
+  // Once the wait has been noticeable long enough to show the loading panel (see the effect
+  // above), the Play button stays disabled until every part is actually in, instead of accepting
+  // an early click and only then admitting it is still busy.
+  const loadingActive = showLoadingPanel && !canPlay;
 
   const start = () => {
     if (sceneReady && allPartsReady()) { begin(); return; }
@@ -499,8 +533,32 @@ function App() {
               <p className="lobby-invitation" lang="ar" dir="rtl">طابخين لك منسف!</p>
               <p className="lobby-tagline">{t.lobby.tagline}</p>
               <div className="lobby-start">
-                <button className="primary-btn lobby-enter" onClick={start} onPointerEnter={warmScene} onFocus={warmScene} aria-busy={starting || undefined} style={starting ? { opacity: 0.7, cursor: 'progress' } : undefined}><span className="lobby-play-icon" aria-hidden="true">▶</span>{t.lobby.start}</button>
-                <span className="lobby-control-note">{t.lobby.keyboardNote}</span>
+                <button
+                  className="primary-btn lobby-enter"
+                  onClick={start}
+                  onPointerEnter={warmScene}
+                  onFocus={warmScene}
+                  disabled={loadingActive}
+                  aria-busy={(starting || loadingActive) || undefined}
+                  style={starting && !loadingActive ? { opacity: 0.7, cursor: 'progress' } : undefined}
+                >
+                  <span className="lobby-play-icon" aria-hidden="true">▶</span>
+                  {loadingActive ? t.lobby.preparing : t.lobby.start}
+                </button>
+                {loadingActive ? (
+                  <div className="lobby-loading" role="status" aria-live="polite">
+                    <div className="lobby-loading-track">
+                      <div className="lobby-loading-fill" style={{ width: `${Math.round(loadFraction * 100)}%` }} />
+                    </div>
+                    <div className="lobby-loading-meta">
+                      <span className="lobby-loading-label">{t.lobby.loadingLabel}</span>
+                      <span className="lobby-loading-pct">{isolateLtr(`${Math.round(loadFraction * 100)}%`)}</span>
+                    </div>
+                    <p className="lobby-loading-tip">💡 {loadingTips[loadingTipIndex]}</p>
+                  </div>
+                ) : (
+                  <span className="lobby-control-note">{t.lobby.keyboardNote}</span>
+                )}
               </div>
               <div className="lobby-rivals">
                 <span>{t.lobby.rivalsHeading}</span>

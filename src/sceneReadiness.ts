@@ -7,13 +7,24 @@
 const PARTS = [0, 1, 2, 3];
 const ready = new Set<number>();
 const waiters = new Set<() => void>();
+const listeners = new Set<() => void>();
 
 export const allPartsReady = () => PARTS.every((id) => ready.has(id));
+export const readyPartCount = () => ready.size;
+export const totalPartCount = () => PARTS.length;
 
 /** Called by a part when its model is in, or when it has given up loading (a broken model must not block the game). */
 export function markPartReady(id: number) {
+  if (ready.has(id)) return;
   ready.add(id);
+  listeners.forEach((fn) => fn());
   if (allPartsReady()) [...waiters].forEach((done) => done());
+}
+
+/** Called (once per part, as each one comes in) so a loading screen can show progress, not just the final all-ready event. Returns an unsubscribe function. */
+export function onPartsChange(fn: () => void): () => void {
+  listeners.add(fn);
+  return () => { listeners.delete(fn); };
 }
 
 /** Resolves when every model is in. Gives up waiting after `timeoutMs` so a failed download cannot hold the game back for ever. */
