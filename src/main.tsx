@@ -6,6 +6,7 @@ import { botSeats, foodPatches, platterFood } from './platterFood';
 import { ContextualHUD } from './ContextualHUD';
 import { Scoreboard } from './Scoreboard';
 import { TouchControls } from './TouchControls';
+import { RollLegend } from './RollLegend';
 import { MobileHeader } from './MobileHeader';
 import { type Lang, TRANSLATIONS, isolateLtr } from './i18n';
 import { formatNumber, roundTo2 } from './formatNumber';
@@ -53,17 +54,27 @@ const STEP_PHOTOS = [scoopStepImg, rollStepImg, eatStepImg];
 const MOBILE_STEP_PHOTOS = [mobileGatherImg, mobileRollImg, mobileEatImg];
 const MOBILE_STEPS = {
   en: [
-    { label: 'Tap and scoop', title: 'Scoop', desc: 'Use the wheel to reach the rice, then hold Scoop. Release when your palm is full.' },
-    { label: 'Roll the lokma', title: 'Roll', desc: 'Tap left and right on the wheel to shape one round lokma.' },
+    { label: 'Tap and scoop', title: 'Scoop', desc: 'Push the joystick to the rice, then hold Scoop. Let go when it says enough rice.' },
+    { label: 'Roll the lokma', title: 'Roll', desc: 'Flick the joystick left and right to shape one round lokma.' },
     { label: 'Take the bite', title: 'Eat', desc: 'When the lokma is green, tap Eat and score your bite.' },
   ],
   ar: [
-    { label: 'اجمع الرز', title: 'اجمع', desc: 'حرّك العجلة نحو الرز واضغط مطولاً على جمع، ثم اتركه عندما تمتلئ يدك.' },
-    { label: 'دوّر اللقمة', title: 'دوّر', desc: 'اضغط يميناً ويساراً على العجلة حتى تصبح اللقمة مستديرة.' },
-    { label: 'خذ اللقمة', title: 'كُل', desc: 'عندما تصبح اللقمة خضراء، اضغط كُل لتحصل على النقاط.' },
+    { label: 'جمّع الرز', title: 'جمّع', desc: 'حرّك الجويستك عالرز ودوس وضلّك دايس جمّع، وفلّت لمّا يصير الرز كفاية.' },
+    { label: 'دحبر اللقمة', title: 'دحبر', desc: 'حرّك الجويستك يمين ويسار لحد ما تصير اللقمة دايرة.' },
+    { label: 'كُل اللقمة', title: 'كُل', desc: 'لمّا تصير اللقمة خضرا، دوس كُل وخُد نقاطك.' },
   ],
 } as const;
 const refinedLook = new URLSearchParams(window.location.search).get('look') !== 'before';
+
+// The saved language is a nicety. When the game is embedded on another site (itch.io runs it in a
+// cross-site iframe), browsers that block third-party storage throw on any access to localStorage, and
+// an unguarded read here would leave a blank page. Fall back to English and carry on.
+const readSavedLang = (): Lang => {
+  try { return localStorage.getItem('mansaf_lang') === 'ar' ? 'ar' : 'en'; } catch { return 'en'; }
+};
+const saveLang = (value: Lang) => {
+  try { localStorage.setItem('mansaf_lang', value); } catch { /* not saved, still works */ }
+};
 
 const CONFETTI_COLORS = ['#f5d676', '#e67a65', '#7bb6bb', '#a4b57d', '#ffffff'];
 const CONFETTI_PIECES = Array.from({ length: 18 }, (_, i) => i);
@@ -146,7 +157,7 @@ function App() {
     [menuOpen, setMenuOpen] = useState(false),
     [helpOpen, setHelpOpen] = useState(false),
     [soundMuted, setSoundMuted] = useState(false),
-    [lang, setLang] = useState<Lang>(() => (localStorage.getItem('mansaf_lang') as Lang) || 'en'),
+    [lang, setLang] = useState<Lang>(readSavedLang),
     [sceneWanted, setSceneWanted] = useState(false),
     [starting, setStarting] = useState(false),
     [loadFraction, setLoadFraction] = useState(0),
@@ -167,7 +178,7 @@ function App() {
   const toggleLang = () => {
     const nextLang: Lang = lang === 'en' ? 'ar' : 'en';
     setLang(nextLang);
-    localStorage.setItem('mansaf_lang', nextLang);
+    saveLang(nextLang);
   };
 
   useEffect(() => {
@@ -576,6 +587,7 @@ function App() {
                     <div className="lobby-step-copy">
                       <h3>{step.title}</h3>
                       <p>{step.desc}</p>
+                      {index === 1 && window.innerWidth > 700 && <RollLegend lang={lang} />}
                       <div className="lobby-step-keys" dir="ltr" aria-hidden="true">{[['↑ ↓ ← →', t.keys.space], ['← →'], ['↑']][index].map(key => <kbd key={key}>{key}</kbd>)}</div>
                     </div>
                   </li>
@@ -674,7 +686,7 @@ function App() {
               {t.intro.steps.map((step, index) => (
                 <li className="match-guide-card" key={step.label}>
                   <img src={STEP_PHOTOS[index]} alt={step.label} width="720" height="720" decoding="async" />
-                  <div><h3><span aria-hidden="true">{index + 1}</span>{step.title}</h3><p>{step.desc}</p></div>
+                  <div><h3><span aria-hidden="true">{index + 1}</span>{step.title}</h3><p>{step.desc}</p>{index === 1 && <RollLegend lang={lang} />}</div>
                 </li>
               ))}
             </ol>

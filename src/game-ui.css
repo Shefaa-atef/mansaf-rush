@@ -92,7 +92,7 @@
 .menu-action-stack { gap:14px; }
 .close-btn { background:linear-gradient(#fff1ce,#edcb94); color:#573122; border:2px solid #573122; border-radius:10px; box-shadow:0 3px 0 #281510; }
 .guide-modal-layout { width:min(970px,100%); padding:28px 30px; }
-.match-guide-steps { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; margin:0 0 26px; padding:0; list-style:none; text-align:start; }
+.match-guide-steps { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; margin:0 0 18px; padding:0; list-style:none; text-align:start; }
 .match-guide-card { border:2px solid #382017; border-radius:17px; background:var(--ui-cream); padding:5px; box-shadow:0 5px 0 #281510; overflow:hidden; }
 .match-guide-card>img { display:block; width:100%; height:auto; aspect-ratio:1; border-radius:11px; }
 .match-guide-card>div { padding:12px 10px; }
@@ -101,6 +101,12 @@
 .match-guide-card:nth-child(2) h3>span { background:#bfe079; }
 .match-guide-card:nth-child(3) h3>span { background:#e96b43; }
 .match-guide-card p { color:#65422e; font:800 13px/1.65 'Nunito','Changa',sans-serif; margin:0; }
+/* The roll gauge's three zones as a colour key on the how-to cards. Same colours as the in-game gauge. */
+.roll-legend { display:flex; margin-top:8px; overflow:hidden; border:2px solid #382017; border-radius:999px; box-shadow:0 2px 0 #281510; font:900 10px/1 'Outfit','Changa',sans-serif; letter-spacing:.4px; }
+.roll-legend span { flex:1 1 auto; padding:4px 8px 5px; text-align:center; color:#2b1a10; }
+.roll-legend .is-loose { background:#ffcf55; }
+.roll-legend .is-round { background:#bfe079; }
+.roll-legend .is-squashed { background:#e96b43; }
 .guide-close-btn { margin-top:0; }
 /* Results: the win / lose illustration sits beside the leaderboard, so each score appears only once. */
 .results-modal-layout { width:min(840px,100%); padding:22px; display:grid; grid-template-columns:minmax(0,380px) minmax(0,1fr); gap:26px; align-items:center; }

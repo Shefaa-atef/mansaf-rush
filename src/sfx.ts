@@ -137,6 +137,41 @@ export function playRoundLokma() {
   tone(990, t + 0.08, 0.18, 0.055, 'triangle');
 }
 
+/** One bright ping: the palm holds enough rice to roll, so the player can let go of Scoop now. */
+export function playScoopEnough() {
+  unlockAudio();
+  if (muted || !ctx) return;
+  tone(784, ctx.currentTime, 0.13, 0.055, 'triangle');
+}
+
+/** Two quick pings: the palm cannot hold any more rice. */
+export function playScoopFull() {
+  unlockAudio();
+  if (muted || !ctx) return;
+  const t = ctx.currentTime;
+  tone(784, t, 0.07, 0.05, 'triangle');
+  tone(988, t + 0.08, 0.14, 0.055, 'triangle');
+}
+
+/** A soft falling pat: the scoop is locked, the gathering is over and the rolling begins. */
+export function playScoopDone() {
+  unlockAudio();
+  if (muted || !ctx) return;
+  const t = ctx.currentTime;
+  tone(523, t, 0.07, 0.045, 'triangle');
+  tone(392, t + 0.07, 0.11, 0.04, 'triangle');
+  noiseBurst(t, 0.05, 0.03, 900);
+}
+
+/** A short buzz on phones that can vibrate. Silent everywhere else, and never needed to play. */
+export function haptic(pattern: number | number[]) {
+  try {
+    navigator.vibrate?.(pattern);
+  } catch {
+    /* Vibration is optional. */
+  }
+}
+
 /** A soft low thud: the lokma was rolled too long and got squashed. */
 export function playSquashed() {
   unlockAudio();

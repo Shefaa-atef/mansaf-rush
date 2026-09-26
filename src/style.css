@@ -1024,7 +1024,7 @@ canvas {
 }
 
 /* Bottom Widgets (Scoreboard & Contextual Key Assistant):
-   Preserve LTR spatial ordering so 4 player cards match 3D seats (You, Zaid, Omar, Sami)
+   Preserve LTR spatial ordering so 4 player cards match 3D seats (You, Suhaib, Ameen, Mefleh)
    and keyboard arrow keys remain physically accurate. */
 [dir="rtl"] .scoreboard-footer,
 [dir="rtl"] .scoreboard-grid,

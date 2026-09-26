@@ -4,13 +4,15 @@ import * as THREE from 'three';
 import { keepHandAboveFood } from './handClearance';
 import { almondUnder, foodObstacleHeight, foodSurface, foodTopBound, meatUnder, toppingsOnPatch } from './MansafPlatter';
 import { platterFood } from './platterFood';
-import { freshLokma, pressEat, serveQueuedEat, updateScoop, lockScoop, performRoll, nextRollSquashes } from './lokma';
+import { freshLokma, pressEat, serveQueuedEat, updateScoop, lockScoop, performRoll, nextRollSquashes, MIN_SCOOP, MAX_SCOOP } from './lokma';
+import { steerFromStick, touchSteer } from './joystick';
 import { type HandMotion, type HandPoseName } from './handPoses';
 import { playerArmMotion, EATING_TIMING } from './playerArmMotion';
 import { HandFood } from './HandFood';
 import { BlenderPlayerArm } from './BlenderPlayerArm';
-import { playEat, playRoundLokma, playSquashed, unlockAudio } from './sfx';
-import { type Lang, TRANSLATIONS } from './i18n';
+import { haptic, playEat, playRoundLokma, playScoopDone, playScoopEnough, playScoopFull, playSquashed, unlockAudio } from './sfx';
+import { type Lang, feedbackText } from './i18n';
+import { isTouchLayout } from './touchLayout';
 
 import type { Game } from './main';
 const smooth = (t: number) => THREE.MathUtils.smoothstep(t, 0, 1);
@@ -91,13 +93,15 @@ export function PlayerHand({
         l.space = true;
         if (!l.eating && !l.gathering && !l.shaping && !l.readyToEat) {
           l.gathering = true;
+          haptic(10);
         }
       } else if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
         // While SPACE is held to scoop, ← / → only steer the hand across the rice. They roll once
         // the scoop is locked (SPACE let go) — a tap alone rolls it, no need to hold SPACE again.
         if (!l.eating && (l.shaping || l.readyToEat)) {
           const dir = e.code === 'ArrowLeft' ? 'left' : 'right';
-          const fb = TRANSLATIONS[langRef.current].feedback;
+          const touch = isTouchLayout();
+          const fb = feedbackText(langRef.current, touch);
           if (l.last === dir) {
             // Rolling rice needs the other hand's push next, like the real motion: the same side
             // twice in a row does not move the count on, so say why instead of staying silent.
@@ -115,7 +119,8 @@ export function PlayerHand({
               } else if (nextRollSquashes(l)) {
                 g.feedback = fb.almostSquashed;
               } else {
-                g.feedback = l.readyToEat ? fb.roundLokma : fb.rollHint(l.rolls, l.targetRolls);
+                // The step guide already shows the roll count, so phones only hear about a round lokma.
+                g.feedback = l.readyToEat ? fb.roundLokma : touch ? '' : fb.rollHint(l.rolls, l.targetRolls);
               }
               g.feedbackAt = now;
             }
@@ -127,7 +132,7 @@ export function PlayerHand({
         // A round lokma whose last roll is still turning is queued by pressEat and eaten a moment
         // later, so only a lokma that is not round yet gets a hint.
         else if (result === 'not-round-yet' && l.shaping) {
-          g.feedback = TRANSLATIONS[langRef.current].feedback.finishRolling;
+          g.feedback = feedbackText(langRef.current, isTouchLayout()).finishRolling;
           g.feedbackAt = now;
         }
       }
@@ -143,9 +148,14 @@ export function PlayerHand({
         if (l.gathering) {
           const now = performance.now();
           lockScoop(l);
-          const fb = TRANSLATIONS[langRef.current].feedback;
-          g.feedback = l.shaping ? fb.scooped(l.targetRolls) : fb.smallScoop;
+          const fb = feedbackText(langRef.current, false);
+          // Phones get this from the step guide instead (see feedbackTouch in i18n.ts).
+          g.feedback = isTouchLayout() ? '' : l.shaping ? fb.scooped(l.targetRolls) : fb.smallScoop;
           g.feedbackAt = now;
+          if (l.shaping) {
+            playScoopDone();
+            haptic(45);
+          }
         }
       }
     };
@@ -212,6 +222,9 @@ export function PlayerHand({
         if (keysDown.current['ArrowRight'] || keysDown.current['KeyD']) dx += speed;
         if (keysDown.current['ArrowUp'] || keysDown.current['KeyW']) dz -= speed;
         if (keysDown.current['ArrowDown'] || keysDown.current['KeyS']) dz += speed;
+        const steer = steerFromStick(touchSteer);
+        dx += steer.x * speed;
+        dz += steer.y * speed;
       }
       p.input.set(dx, dz).clampLength(0, speed);
       p.velocity.lerp(p.input, 1 - Math.exp(-10 * dt));
@@ -239,7 +252,15 @@ export function PlayerHand({
 
       if (l.gathering) {
         if (surface.available) {
+          const riceBefore = l.amount;
           updateScoop(l, Math.min(delta, .25), now);
+          if (riceBefore < MIN_SCOOP && l.amount >= MIN_SCOOP) {
+            playScoopEnough();
+            haptic(30);
+          } else if (riceBefore < MAX_SCOOP && l.amount >= MAX_SCOOP) {
+            playScoopFull();
+            haptic([25, 40, 25]);
+          }
           // Lamb and almonds only go into the lokma if they really left the tray with it, and the
           // lokma gets everything that leaves. The hand takes a piece the moment it closes on it, no
           // matter how little rice it holds yet (the old check waited for two units of rice, by which

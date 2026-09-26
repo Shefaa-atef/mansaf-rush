@@ -4,7 +4,7 @@ import omarImg from './assets/web/portrait-omar.webp';
 import samiImg from './assets/web/portrait-sami.webp';
 
 const CHARACTER_PHOTOS = [meImg, zaidImg, omarImg, samiImg];
-const CHARACTER_NAMES = ['You', 'Zaid', 'Omar', 'Sami'];
+const CHARACTER_NAMES = ['You', 'Suhaib', 'Ameen', 'Mefleh'];
 
 // `name` is the already-translated display name; the English fallback is only
 // for callers that don't have one to hand.

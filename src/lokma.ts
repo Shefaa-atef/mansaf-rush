@@ -220,6 +220,34 @@ export function serveQueuedEat(l: Lokma, now: number): boolean {
   return true;
 }
 
+/**
+ * Where the player is in the bite, for the phone guide, the Scoop button and the sound cues. The
+ * scoop is split in four so "enough rice" and "palm full" are cues of their own, not just a number:
+ *   move      nothing in the palm yet, steer to the rice and hold Scoop
+ *   scooping  holding Scoop, not enough rice yet
+ *   enough    holding Scoop with enough rice to roll: let go now (or hold on for a bigger bite)
+ *   full      the palm cannot hold more: let go
+ *   topup     let go too early, so the rice stays in the palm and holding Scoop adds to it
+ *   rolling   the scoop is locked and the rice is being rolled
+ *   ready     a round lokma, waiting to be eaten
+ *   eating    the bite is on its way to the mouth
+ */
+export type BiteStage = 'move' | 'scooping' | 'enough' | 'full' | 'topup' | 'rolling' | 'ready' | 'eating';
+
+export function biteStage(l: Pick<Lokma, 'eating' | 'readyToEat' | 'shaping' | 'gathering' | 'amount'>): BiteStage {
+  if (l.eating) return 'eating';
+  if (l.readyToEat) return 'ready';
+  if (l.shaping) return 'rolling';
+  if (l.gathering) return l.amount >= MAX_SCOOP ? 'full' : l.amount >= MIN_SCOOP ? 'enough' : 'scooping';
+  return l.amount > 0 ? 'topup' : 'move';
+}
+
+/** The step of the three (0 scoop, 1 roll, 2 eat) a stage belongs to. */
+export function biteStep(stage: BiteStage): 0 | 1 | 2 {
+  if (stage === 'rolling') return 1;
+  return stage === 'ready' || stage === 'eating' ? 2 : 0;
+}
+
 export function lokmaLabel(l: Lokma, lang: Lang = 'en'): string {
   const t = TRANSLATIONS[lang].lokmaLabels;
   if (l.eating) {

@@ -5,7 +5,7 @@ export const isolateLtr = (text: string) => `\u2066${text}\u2069`;
 
 export const TRANSLATIONS = {
   en: {
-    names: ['You', 'Zaid', 'Omar', 'Sami'],
+    names: ['You', 'Suhaib', 'Ameen', 'Mefleh'],
     traits: ['Your Seat', 'Quick Bites', 'Steady Eater', 'Big Appetite'],
 
     meta: {
@@ -38,7 +38,7 @@ export const TRANSLATIONS = {
         'A round lokma is worth far more than a squashed one — stop rolling while it is green.',
       ],
       loadingTipsMobile: [
-        'Use the wheel to reach the rice, hold Scoop to fill your palm, then tap left and right to roll it round.',
+        'Use the joystick to reach the rice, hold Scoop to fill your palm, let go when it says enough, then flick left and right to roll it round.',
         'Catch a piece of lamb or an almond in your scoop for bonus points.',
         'A round lokma is worth far more than a squashed one — stop rolling while it is green.',
       ],
@@ -69,7 +69,7 @@ export const TRANSLATIONS = {
         },
         {
           title: 'Roll',
-          desc: 'Alternate the left and right arrows — ← then → then ← — to roll the rice into a circle, no need to hold SPACE. A bigger scoop takes more rolls. Stop while it is green, or it gets squashed.',
+          desc: 'Let go of SPACE, then tap ← → ← → in turn, like rolling rice between your palms. Roll until the gauge turns green, then press ↑. Roll too long and it’s squashed.',
           label: 'Roll the rice into a ball with the left and right arrows',
         },
         {
@@ -102,7 +102,7 @@ export const TRANSLATIONS = {
       card2Title: '2. Scoop',
       card2Desc: 'Hold SPACE over rice and steer with the arrows. Let go when you have enough. Lamb and almonds are worth bonus points.',
       card3Title: '3. Roll into a Circle',
-      card3Desc: 'Alternate ← & → to roll — no need to hold SPACE. A bigger scoop takes more rolls. Stop while the gauge is GREEN, or it gets squashed!',
+      card3Desc: 'Let go of SPACE, then tap ← → ← → in turn, like rolling rice between your palms. Roll until the gauge is GREEN, then press ↑. Roll too long and it’s squashed!',
       card4Title: '4. Eat & Score',
       card4Desc: 'Press Up Arrow (↑) to bring the round Lokma to your mouth and eat!',
       gotIt: 'Got it!',
@@ -140,6 +140,30 @@ export const TRANSLATIONS = {
       scoop: 'Scoop',
     },
 
+    // The phone controls: the joystick, the Scoop and Eat buttons, and the step guide above them.
+    touch: {
+      controls: 'Game controls',
+      joystick: 'Joystick: steer your hand',
+      joystickRoll: 'Joystick: flick left and right to roll',
+      scoop: 'Scoop',
+      scooping: 'Scooping…',
+      letGo: 'Let go ✓',
+      scoopHold: 'Hold to scoop',
+      eat: 'Eat',
+      steps: ['Scoop', 'Roll', 'Eat'],
+      hint: {
+        move: 'Joystick to the rice, then hold Scoop',
+        scooping: 'Gathering rice… keep holding Scoop',
+        dry: 'No rice here. Steer to the rice',
+        enough: 'Enough rice ✓ Let go of Scoop',
+        full: 'Palm full ✓ Let go of Scoop',
+        topup: 'Not enough yet. Hold Scoop to add more',
+        rolling: (rolls: number, target: number) => `Gathering done ✓ Flick left and right (${rolls}/${target})`,
+        ready: 'Round ✓ Tap Eat',
+        eating: 'Enjoy!',
+      },
+    },
+
     // The gauge belongs to the roll: yellow is still loose, green is a round circle, red is squashed.
     meter: {
       zoneLoose: 'LOOSE',
@@ -175,6 +199,15 @@ export const TRANSLATIONS = {
       smallScoop: 'Not enough rice! Keep holding SPACE to scoop more.',
       scooped: (rolls: number) => `Scooped! Alternate ← / → ${rolls} times to roll it into a circle.`,
       alternateHint: 'Switch sides! ← then → then ← again to roll it.',
+    },
+
+    // The messages that stay on screen on the touch controls, which have no SPACE key and no arrows.
+    // Scooped, not enough rice and the roll count are left out on purpose: the step guide above the
+    // controls already says them, and saying it twice hid the hand on small phones.
+    feedbackTouch: {
+      roundLokma: 'Round lokma! Tap Eat. Too much rolling squashes it.',
+      finishRolling: 'Finish rolling with the joystick, then tap Eat.',
+      alternateHint: 'Switch sides! Flick the joystick to the other side.',
     },
 
     // Table-talk bubbles above the bots' heads. Lines are dealt from a shuffled
@@ -223,7 +256,7 @@ export const TRANSLATIONS = {
   },
 
   ar: {
-    names: ['أنت', 'زيد', 'عمر', 'سامي'],
+    names: ['أنت', 'صهيب', 'أمين', 'مفلح'],
     traits: ['مكانك', 'لقمة سريعة', 'ياكل على مهله', 'شهية مفتوحة'],
 
     meta: {
@@ -256,7 +289,7 @@ export const TRANSLATIONS = {
         'اللقمة الدايرة بتسوى نقاط أكتر بكثير من المعجونة — وقّف وهي خضرا.',
       ],
       loadingTipsMobile: [
-        'حرّك العجلة نحو الرز وادعس جمّع لتملي كفّك، وبعدين اضغط يمين ويسار عشان تدحبرها لقمة.',
+        'حرّك الجويستك عالرز ودوس وضلّك دايس جمّع لتملي كفّك، فلّت لمّا يصير الرز كفاية، وبعدين حرّكه يمين ويسار عشان تدحبرها لقمة.',
         'إذا لقيت قطعة لحمة أو لوزة بالرز، اجمعها وياها عشان نقاط زيادة.',
         'اللقمة الدايرة بتسوى نقاط أكتر بكثير من المعجونة — وقّف وهي خضرا.',
       ],
@@ -287,7 +320,7 @@ export const TRANSLATIONS = {
         },
         {
           title: 'دحبر',
-          desc: 'بدّل بين السهم اليمين واليسار — يمين وبعدين يسار وهيك بالتبادل — لتدحبر اللقمة دايرة، بلا ما تحتاج تدوس المسافة. كل ما كان الرز أكتر بدها دحبرة أكتر. وقّف وهي بالأخضر، وإذا زوّدتها بتنعجن.',
+          desc: `فلّت المسافة وبعدين دوس ${isolateLtr('← → ← →')} بالتبادل، متل ما بتدحبر الرز بين كفّيك. دحبر لحد ما يصير اللون أخضر ودوس ${isolateLtr('↑')}، وإذا زوّدت بتنعجن.`,
           label: 'دحبر لقمة الرز بالسهمين اليمين واليسار',
         },
         {
@@ -320,7 +353,7 @@ export const TRANSLATIONS = {
       card2Title: '٢. جمّع',
       card2Desc: 'دوس المسافة فوق الرز وحرّك بالأسهم وجمّع كفّ. لمّا يصير كفاية فلّت المسافة. اللحمة واللوز إلهم نقاط زيادة.',
       card3Title: '٣. دحبر',
-      card3Desc: 'بدّل ← و → عشان تدحبر، بلا ما تحتاج تدوس المسافة. الرز الأكتر بدو دحبرة أكتر. وقّف وهي بالأخضر، وإذا زوّدتها بتنعجن!',
+      card3Desc: `فلّت المسافة وبعدين دوس ${isolateLtr('← → ← →')} بالتبادل، متل ما بتدحبر الرز بين كفّيك. دحبر لحد ما يصير اللون أخضر وبعدين دوس ${isolateLtr('↑')}. وإذا زوّدت بتنعجن!`,
       card4Title: '٤. كُل واجمع نقاط',
       card4Desc: 'دوس السهم لفوق (↑) عشان ترفع اللقمة لتمّك وتاكلها!',
       gotIt: 'تمام!',
@@ -358,6 +391,30 @@ export const TRANSLATIONS = {
       scoop: 'جمّع',
     },
 
+    // The phone controls: the joystick, the Scoop and Eat buttons, and the step guide above them.
+    touch: {
+      controls: 'أزرار اللعب',
+      joystick: 'الجويستك: حرّك إيدك',
+      joystickRoll: 'الجويستك: حرّكه يمين ويسار عشان تدحبر',
+      scoop: 'جمّع',
+      scooping: 'عم تجمّع…',
+      letGo: 'فلّت ✓',
+      scoopHold: 'دوس وضلّك دايس عشان تجمّع',
+      eat: 'كُل',
+      steps: ['جمّع', 'دحبر', 'كُل'],
+      hint: {
+        move: 'الجويستك عالرز، وبعدين ضلّك دايس جمّع',
+        scooping: 'عم تجمّع الرز… ضلّك دايس جمّع',
+        dry: 'ما في رز هون! حرّك الجويستك عالرز',
+        enough: 'الرز كفاية ✓ فلّت جمّع',
+        full: 'كفّك مليان ✓ فلّت جمّع',
+        topup: 'لسا الرز قليل، دوس جمّع وزيد شوي',
+        rolling: (rolls: number, target: number) => `خلص التجميع ✓ دحبر يمين ويسار (${rolls}/${target})`,
+        ready: 'صارت دايرة ✓ دوس كُل',
+        eating: 'صحتين!',
+      },
+    },
+
     // The gauge belongs to the roll: yellow is still loose, green is a round circle, red is squashed.
     meter: {
       zoneLoose: 'سايبة',
@@ -393,6 +450,13 @@ export const TRANSLATIONS = {
       smallScoop: 'الرز قليل! ضلّك دايس عالمسافة عشان تجمّع أكتر.',
       scooped: (rolls: number) => `جمّعت الرز! بدّل ← / → ${rolls} ${rolls <= 10 ? 'مرات' : 'مرة'} عشان تدحبره دايرة.`,
       alternateHint: 'بدّل! دوس ← وبعدين → وهيك بالتبادل عشان تدحبرها.',
+    },
+
+    // The messages that stay on screen on the touch controls, which have no SPACE key and no arrows.
+    feedbackTouch: {
+      roundLokma: 'صارت دايرة! دوس كُل، وإذا زوّدتها بتنعجن.',
+      finishRolling: 'كمّل دحبر بالجويستك، وبعدين دوس كُل.',
+      alternateHint: 'بدّل! حرّك الجويستك عالجهة التانية عشان تدحبرها.',
     },
 
     opponent: {
@@ -443,3 +507,9 @@ export const TRANSLATIONS = {
 // silently showing up untranslated.
 const sameShape: Record<Lang, typeof TRANSLATIONS.en> = TRANSLATIONS;
 void sameShape;
+
+/** The in-game messages, worded for the touch controls when they are showing and for the keyboard otherwise. */
+export function feedbackText(lang: Lang, touch: boolean) {
+  const t = TRANSLATIONS[lang];
+  return touch ? { ...t.feedback, ...t.feedbackTouch } : t.feedback;
+}
